@@ -20,7 +20,7 @@ git push -u origin main
 ```
 3. On GitHub: go to repo → Settings → Pages
 4. Source: Deploy from branch → main → / (root) → Save
-5. Your app will be live at: https://YOURUSERNAME.github.io/waves-app
+5. Your app will be live at: https://laindoe.github.io/waves
 
 ## Add to Home Screen (iPhone)
 1. Open your GitHub Pages URL in Safari
