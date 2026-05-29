@@ -534,27 +534,16 @@
     position: relative;
     width: 100%;
     overflow: hidden;
+    border-radius: 24px;
+    background: #E3C491;
   }
 
-  .shore-svg {
+  .tide-hero canvas {
     display: block;
     width: 100%;
     height: 240px;
   }
 
-  /* The shore group slides in and out like a tide */
-  .shore-group {
-    animation: tideInOut 5s ease-in-out infinite;
-  }
-
-  @keyframes tideInOut {
-    0%   { transform: translateY(0px); }
-    40%  { transform: translateY(-22px); }
-    70%  { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-  }
-
-  /* Stats overlay sits at the bottom (sand area) */
   .tide-stats-overlay {
     position: absolute;
     bottom: 0; left: 0; right: 0;
@@ -562,6 +551,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
+    pointer-events: none;
   }
 
   .tide-stats-left { display: flex; flex-direction: column; }
@@ -1019,93 +1009,7 @@
 
   <!-- ANIMATED TIDE HERO -->
   <div class="tide-hero">
-    <svg class="shore-svg" viewBox="0 0 390 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-      <defs>
-        <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#3EC6D8"/>
-          <stop offset="70%" stop-color="#5BCEDA"/>
-          <stop offset="100%" stop-color="#7DD8E0"/>
-        </linearGradient>
-        <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#C9A96E"/>
-          <stop offset="40%" stop-color="#D4B07A"/>
-          <stop offset="100%" stop-color="#DFC090"/>
-        </linearGradient>
-        <linearGradient id="wetSandGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="rgba(100,170,160,0.5)"/>
-          <stop offset="100%" stop-color="rgba(180,155,100,0.3)"/>
-        </linearGradient>
-      </defs>
-
-      <!-- Sand background -->
-      <rect width="390" height="240" fill="url(#sandGrad)"/>
-
-      <!-- Sand dots/speckles -->
-      <circle cx="60" cy="190" r="2.5" fill="rgba(180,140,80,0.4)"/>
-      <circle cx="120" cy="205" r="1.8" fill="rgba(180,140,80,0.35)"/>
-      <circle cx="200" cy="195" r="2" fill="rgba(180,140,80,0.3)"/>
-      <circle cx="280" cy="210" r="1.5" fill="rgba(180,140,80,0.35)"/>
-      <circle cx="340" cy="198" r="2.2" fill="rgba(180,140,80,0.3)"/>
-      <circle cx="90" cy="215" r="3" fill="rgba(220,200,160,0.5)"/>
-      <circle cx="250" cy="220" r="2.5" fill="rgba(220,200,160,0.5)"/>
-      <!-- sparkle -->
-      <path d="M350 220 L352 216 L354 220 L358 222 L354 224 L352 228 L350 224 L346 222 Z" fill="rgba(255,255,255,0.5)"/>
-
-      <!-- Animated water group - whole thing slides in/out -->
-      <g class="shore-group">
-
-        <!-- Wet sand zone (under the foam) -->
-        <path d="M-20 148 Q50 138 120 145 Q200 152 270 140 Q330 130 410 142 L410 240 L-20 240 Z" fill="url(#wetSandGrad)"/>
-
-        <!-- Water fill above foam -->
-        <path d="M-20 0 L410 0 L410 155 Q330 143 270 155 Q200 167 120 160 Q50 153 -20 163 Z" fill="url(#waterGrad)"/>
-
-        <!-- Foam white fill (the creamy wash area) -->
-        <path d="M-20 148 Q30 140 80 150 Q130 160 180 148 Q230 137 280 148 Q330 158 410 142 Q380 168 310 175 Q240 182 160 172 Q90 163 20 175 Q0 178 -20 172 Z" fill="rgba(255,255,255,0.85)"/>
-
-        <!-- Foam edge (bright white line) -->
-        <path d="M-20 148 Q30 140 80 150 Q130 160 180 148 Q230 137 280 148 Q330 158 410 142" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-
-        <!-- Second foam wash below -->
-        <path d="M-20 168 Q40 162 100 170 Q160 178 220 166 Q280 155 350 166 Q380 170 410 162 Q390 182 320 188 Q240 194 160 186 Q80 178 -20 186 Z" fill="rgba(255,255,255,0.4)"/>
-        <path d="M-20 168 Q40 162 100 170 Q160 178 220 166 Q280 155 350 166 Q380 170 410 162" stroke="rgba(255,255,255,0.7)" stroke-width="2" fill="none" stroke-linecap="round"/>
-
-        <!-- Bubbles in water zone (large ovals, white outline) -->
-        <ellipse cx="60" cy="60" rx="28" ry="18" fill="none" stroke="white" stroke-width="2" opacity="0.6"/>
-        <ellipse cx="140" cy="40" rx="42" ry="26" fill="none" stroke="white" stroke-width="2" opacity="0.55"/>
-        <ellipse cx="240" cy="55" rx="35" ry="22" fill="none" stroke="white" stroke-width="2" opacity="0.6"/>
-        <ellipse cx="330" cy="35" rx="28" ry="17" fill="none" stroke="white" stroke-width="2" opacity="0.55"/>
-        <ellipse cx="30" cy="95" rx="20" ry="13" fill="none" stroke="white" stroke-width="1.8" opacity="0.5"/>
-        <ellipse cx="100" cy="88" rx="32" ry="20" fill="none" stroke="white" stroke-width="2" opacity="0.55"/>
-        <ellipse cx="190" cy="100" rx="25" ry="15" fill="none" stroke="white" stroke-width="1.8" opacity="0.5"/>
-        <ellipse cx="290" cy="85" rx="38" ry="24" fill="none" stroke="white" stroke-width="2" opacity="0.6"/>
-        <ellipse cx="370" cy="90" rx="22" ry="14" fill="none" stroke="white" stroke-width="1.8" opacity="0.5"/>
-        <ellipse cx="75" cy="120" rx="18" ry="11" fill="none" stroke="white" stroke-width="1.6" opacity="0.45"/>
-        <ellipse cx="170" cy="128" rx="30" ry="18" fill="none" stroke="white" stroke-width="1.8" opacity="0.5"/>
-        <ellipse cx="260" cy="118" rx="22" ry="14" fill="none" stroke="white" stroke-width="1.6" opacity="0.45"/>
-        <ellipse cx="355" cy="125" rx="26" ry="16" fill="none" stroke="white" stroke-width="1.8" opacity="0.5"/>
-
-        <!-- Small bubbles -->
-        <ellipse cx="45" cy="75" rx="9" ry="6" fill="none" stroke="white" stroke-width="1.4" opacity="0.45"/>
-        <ellipse cx="200" cy="72" rx="12" ry="7" fill="none" stroke="white" stroke-width="1.4" opacity="0.4"/>
-        <ellipse cx="310" cy="110" rx="10" ry="6" fill="none" stroke="white" stroke-width="1.4" opacity="0.4"/>
-        <circle cx="380" cy="60" r="5" fill="none" stroke="white" stroke-width="1.4" opacity="0.4"/>
-        <ellipse cx="130" cy="110" rx="8" ry="5" fill="none" stroke="white" stroke-width="1.2" opacity="0.4"/>
-
-        <!-- Foam zone bubbles (over the white wash) -->
-        <ellipse cx="50" cy="158" rx="22" ry="12" fill="none" stroke="white" stroke-width="1.8" opacity="0.7"/>
-        <ellipse cx="130" cy="162" rx="30" ry="16" fill="none" stroke="white" stroke-width="2" opacity="0.75"/>
-        <ellipse cx="220" cy="155" rx="24" ry="13" fill="none" stroke="white" stroke-width="1.8" opacity="0.7"/>
-        <ellipse cx="310" cy="160" rx="34" ry="18" fill="none" stroke="white" stroke-width="2" opacity="0.75"/>
-        <ellipse cx="380" cy="154" rx="18" ry="10" fill="none" stroke="white" stroke-width="1.6" opacity="0.65"/>
-        <ellipse cx="90" cy="175" rx="26" ry="14" fill="none" stroke="white" stroke-width="1.8" opacity="0.6"/>
-        <ellipse cx="200" cy="178" rx="32" ry="17" fill="none" stroke="white" stroke-width="1.8" opacity="0.65"/>
-        <ellipse cx="340" cy="172" rx="28" ry="15" fill="none" stroke="white" stroke-width="1.8" opacity="0.6"/>
-        <ellipse cx="20" cy="172" rx="16" ry="9" fill="none" stroke="white" stroke-width="1.4" opacity="0.55"/>
-
-      </g><!-- end shore-group -->
-
-    </svg>
+    <canvas id="waveHeroCanvas" width="390" height="240" aria-label="Animated beach shoreline"></canvas>
 
     <!-- Stats overlay on sand -->
     <div class="tide-stats-overlay">
@@ -1232,15 +1136,169 @@
     item.classList.toggle('open');
   }
 
+  const waveHeroState = {
+    pct: 32,
+    bubbles: [],
+    lastTime: 0,
+    canvas: null,
+    ctx: null
+  };
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function initWaveHero() {
+    const canvas = document.getElementById('waveHeroCanvas');
+    if (!canvas) return;
+    waveHeroState.canvas = canvas;
+    waveHeroState.ctx = canvas.getContext('2d');
+    waveHeroState.bubbles = Array.from({ length: 13 }, () => ({
+      x: 30 + Math.random() * 330,
+      y: 20 + Math.random() * 120,
+      rx: 6 + Math.random() * 12,
+      ry: 4 + Math.random() * 8,
+      alpha: 0.18 + Math.random() * 0.28,
+      speed: 8 + Math.random() * 18,
+      phase: Math.random() * Math.PI * 2
+    }));
+    requestAnimationFrame(animateWaveHero);
+  }
+
+  function getShoreY() {
+    const canvas = waveHeroState.canvas;
+    if (!canvas) return 140;
+    const height = canvas.height;
+    const sandHeight = 78;
+    const fillPct = clamp(waveHeroState.pct, 0, 100) / 100;
+    const minY = height - sandHeight - 18;
+    const maxY = height - sandHeight - 72;
+    return minY - (minY - maxY) * fillPct;
+  }
+
+  function drawWaveHero(time) {
+    const ctx = waveHeroState.ctx;
+    const canvas = waveHeroState.canvas;
+    if (!ctx || !canvas) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const sandHeight = 78;
+    const shoreY = getShoreY();
+
+    // Sand base
+    const sandGrad = ctx.createLinearGradient(0, h - sandHeight, 0, h);
+    sandGrad.addColorStop(0, '#C9A96E');
+    sandGrad.addColorStop(0.44, '#D4B07A');
+    sandGrad.addColorStop(1, '#DFC090');
+    ctx.fillStyle = sandGrad;
+    ctx.fillRect(0, h - sandHeight, w, sandHeight);
+
+    // Sand texture
+    const sandDots = [
+      [52, 198, 2.4], [118, 213, 1.6], [190, 205, 2.1], [280, 215, 1.7], [334, 203, 2.3], [87, 222, 2.9], [248, 228, 2.2]
+    ];
+    ctx.fillStyle = 'rgba(180,140,80,0.4)';
+    sandDots.forEach(([x, y, r]) => {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(w, 0);
+
+    const points = [];
+    for (let x = 0; x <= w; x += 12) {
+      const noise = Math.sin(x * 0.05 + time * 1.6) * 10 + Math.cos(x * 0.12 - time * 1.2) * 6;
+      const y = shoreY + noise;
+      points.push({ x, y });
+      ctx.lineTo(x, y);
+    }
+
+    ctx.lineTo(w, 0);
+    ctx.closePath();
+
+    const waterGrad = ctx.createLinearGradient(0, 0, 0, shoreY + 28);
+    waterGrad.addColorStop(0, '#49DFE1');
+    waterGrad.addColorStop(0.55, '#3EC6D8');
+    waterGrad.addColorStop(1, '#2BB7CF');
+    ctx.fillStyle = waterGrad;
+    ctx.fill();
+
+    // Foam fill
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    points.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.lineTo(w, shoreY + 32);
+    ctx.lineTo(0, shoreY + 32);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.76)';
+    ctx.fill();
+
+    // Foam edge
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    points.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+
+    // Bubbles
+    ctx.lineWidth = 1.6;
+    waveHeroState.bubbles.forEach((bubble, index) => {
+      const drift = Math.sin(time * 1.2 + bubble.phase) * 8;
+      const y = bubble.y + Math.sin(time * 0.9 + index) * 4;
+      const x = bubble.x + drift * 0.35;
+      const alpha = clamp(bubble.alpha + Math.sin(time * 2 + bubble.phase) * 0.12, 0.18, 0.55);
+      ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.14})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y, bubble.rx, bubble.ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      bubble.y -= bubble.speed * 0.02;
+      if (bubble.y < 18) bubble.y = shoreY - 10 + Math.random() * 40;
+      bubble.x += Math.sin(time * 1.1 + bubble.phase) * 0.2;
+      if (bubble.x < 12) bubble.x = 12;
+      if (bubble.x > w - 12) bubble.x = w - 12;
+    });
+
+    // Wet sand band
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+    ctx.beginPath();
+    ctx.moveTo(0, shoreY + 12);
+    points.forEach(p => ctx.lineTo(p.x, p.y + 16));
+    ctx.lineTo(w, h - sandHeight);
+    ctx.lineTo(0, h - sandHeight);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function animateWaveHero(timestamp) {
+    const time = timestamp * 0.001;
+    drawWaveHero(time);
+    requestAnimationFrame(animateWaveHero);
+  }
+
   function openWave(name, pct) {
     document.getElementById('wd-name').textContent = name;
     document.getElementById('wd-pct').textContent = pct + '%';
+    waveHeroState.pct = pct;
     showPage('wave-detail');
   }
 
   // Init
   window.addEventListener('load', () => {
     equalizeHeights();
+    initWaveHero();
     // Open all waves by default
     document.querySelectorAll('.wa-item').forEach(w => w.classList.add('open'));
   });
