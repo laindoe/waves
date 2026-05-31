@@ -1776,13 +1776,7 @@
     <div class="aw-sub">All your currents, by wave.</div>
 
     <!-- WAVE TABS -->
-    <div class="ocean-tabs">
-      <div class="ocean-tab active" onclick="switchOceanTab(0)">homieOstasis</div>
-      <div class="ocean-tab-divider"></div>
-      <div class="ocean-tab" onclick="switchOceanTab(1)">Lain Doe</div>
-      <div class="ocean-tab-divider"></div>
-      <div class="ocean-tab" onclick="switchOceanTab(2)">Heart Direction</div>
-    </div>
+    <div class="ocean-tabs" id="ocean-tabs-bar"></div>
 
     <!-- ADD NEW CURRENT -->
     <button class="ocean-add-btn" onclick="addNewCurrent()">
@@ -2091,7 +2085,7 @@
     // Just re-render everything and go back
     renderWavesAccordion();
     renderTodayPage();
-    renderOceanContent();
+    renderOceanTabs();
     showPage(prevPage);
   }
 
@@ -2374,6 +2368,7 @@
       renderSettingsWaveList();
       renderWavesAccordion();
       renderTodayPage();
+      renderOceanTabs();
     }
   }
 
@@ -2445,16 +2440,31 @@
   }
 
   // ── RENDER: OCEAN PAGE ──
-  let activeOceanTab = 0;
+  let activeOceanWaveId = null;
 
-  function switchOceanTab(index) {
-    activeOceanTab = index;
-    document.querySelectorAll('.ocean-tab').forEach((t, i) => t.classList.toggle('active', i === index));
-    renderOceanContent();
+  function renderOceanTabs() {
+    const bar = document.getElementById('ocean-tabs-bar');
+    if (!bar) return;
+    const waves = DB_WAVES.filter(w => w.active !== false);
+    if (!waves.length) { bar.innerHTML = ''; return; }
+    if (!activeOceanWaveId || !waves.find(w => w.id === activeOceanWaveId)) {
+      activeOceanWaveId = waves[0].id;
+    }
+    bar.innerHTML = waves.map((w, i) =>
+      (i > 0 ? '<div class="ocean-tab-divider"></div>' : '') +
+      `<div class="ocean-tab ${w.id === activeOceanWaveId ? 'active' : ''}" onclick="switchOceanTab('${w.id}')">${w.name}</div>`
+    ).join('');
+    renderOceanTabs();
+  }
+
+  function switchOceanTab(waveId) {
+    activeOceanWaveId = waveId;
+    document.querySelectorAll('.ocean-tab').forEach(t => t.classList.toggle('active', t.textContent === DB_WAVES.find(w => w.id === waveId)?.name));
+    renderOceanTabs();
   }
 
   function renderOceanContent() {
-    const wave = DB_WAVES[activeOceanTab];
+    const wave = DB_WAVES.find(w => w.id === activeOceanWaveId);
     if (!wave) return;
     const container = document.getElementById('oceanTabContent');
     if (!container) return;
@@ -2495,7 +2505,7 @@
     DB_CURRENTS = DB_CURRENTS.filter(c => c.id !== id);
     DB_TASKS = DB_TASKS.filter(t => t.currentId !== id);
     save();
-    renderOceanContent();
+    renderOceanTabs();
   }
 
   function addNewCurrent() {
@@ -3093,7 +3103,7 @@
     }
 
     goToSlide(0);
-    renderOceanContent();
+    renderOceanTabs();
     renderWavesAccordion();
     renderTodayPage();
     document.querySelectorAll('.wa-item').forEach(w => w.classList.add('open'));
@@ -3471,12 +3481,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     renderSettingsWaveList();
     renderWavesAccordion();
     renderTodayPage();
-    renderOceanContent();
+    renderOceanTabs();
   }
 
   // Render wave list whenever settings page opens - called from showPage override below
   document.addEventListener('pageswitched', (e) => {
     if (e.detail === 'settings') { renderSettingsWaveList(); renderApiKeyStatus(); }
+    if (e.detail === 'ocean') { renderOceanTabs(); }
   });
 
   // ── API KEY ──
