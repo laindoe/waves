@@ -3829,6 +3829,217 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 </script>
 
 <script>
+  // ── ADD TO WAVE WIZARD ──
+  let wizardData = { currentName: '', wave: '', category: '', intent: '', tasks: [] };
+  let wizardStep = 0;
+
+  function openAddToWaveModal(currentName, waveName, category) {
+    wizardData = { currentName, wave: waveName, category, intent: '', tasks: [] };
+    wizardStep = 0;
+    renderWizardStep();
+    document.getElementById('addToWaveModal').classList.add('open');
+  }
+
+  function closeWizard() {
+    document.getElementById('addToWaveModal').classList.remove('open');
+  }
+
+  function closeAddToWaveModal(e) {
+    if (e.target === document.getElementById('addToWaveModal')) closeWizard();
+  }
+
+  function updateWizardDots(step) {
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('wdot' + i);
+      if (!dot) continue;
+      dot.classList.remove('active', 'done');
+      if (i < step) dot.classList.add('done');
+      else if (i === step) dot.classList.add('active');
+    }
+  }
+
+  function renderWizardStep() {
+    updateWizardDots(wizardStep);
+    const content = document.getElementById('wizStepContent');
+    const nav = document.getElementById('wizNav');
+    if (!content || !nav) return;
+
+    if (wizardStep === 0) {
+      const wave = DB_WAVES.find(w => w.name === wizardData.wave);
+      const waveColor = wave ? wave.color : '#3EC6D8';
+      content.innerHTML = `
+        <div class="wiz-step-label">STEP 1 OF 4</div>
+        <div class="wiz-step-title">Confirm Current</div>
+        <div class="wiz-step-sub">This current will move from the Ocean into your active wave.</div>
+        <div class="wiz-confirm-row">
+          <div class="wiz-confirm-icon">${getCategoryIcon(wizardData.category, 20)}</div>
+          <div class="wiz-confirm-text">
+            <div class="wiz-confirm-label">CURRENT</div>
+            <div class="wiz-confirm-value">${wizardData.currentName}</div>
+          </div>
+        </div>
+        <div class="wiz-confirm-row">
+          <div class="wiz-confirm-icon">
+            <svg width="18" height="12" viewBox="0 0 26 14" fill="none"><path d="M1 7 C4 3, 8 3, 13 7 C18 11, 22 11, 25 7" stroke="${waveColor}" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </div>
+          <div class="wiz-confirm-text">
+            <div class="wiz-confirm-label">WAVE</div>
+            <div class="wiz-confirm-value">${wizardData.wave}</div>
+          </div>
+        </div>
+        <div class="wiz-confirm-row">
+          <div class="wiz-confirm-icon">${getCategoryIcon(wizardData.category, 18)}</div>
+          <div class="wiz-confirm-text">
+            <div class="wiz-confirm-label">CATEGORY</div>
+            <div class="wiz-confirm-value">${wizardData.category}</div>
+          </div>
+        </div>`;
+      nav.innerHTML = `
+        <button class="wiz-btn-back" onclick="closeWizard()">Cancel</button>
+        <button class="wiz-btn-next" onclick="wizardNext()">Continue <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>`;
+
+    } else if (wizardStep === 1) {
+      content.innerHTML = `
+        <div class="wiz-step-label">STEP 2 OF 4</div>
+        <div class="wiz-step-title">What's the intent?</div>
+        <div class="wiz-step-sub">Describe what you want to accomplish. This helps generate better tasks — or skip and add manually.</div>
+        <textarea class="wiz-textarea" id="wizIntentInput" placeholder="e.g. Launch the coloring book by end of month — finalize art, set up the shop listing, and start promoting..." maxlength="400">${wizardData.intent}</textarea>
+        <div class="wiz-char-count"><span id="intentCharCount">${wizardData.intent.length}</span> / 400</div>`;
+      setTimeout(() => {
+        const ta = document.getElementById('wizIntentInput');
+        if (ta) ta.addEventListener('input', () => {
+          wizardData.intent = ta.value;
+          const cc = document.getElementById('intentCharCount');
+          if (cc) cc.textContent = ta.value.length;
+        });
+      }, 0);
+      nav.innerHTML = `
+        <button class="wiz-btn-back" onclick="wizardBack()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2.2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+        <button class="wiz-btn-next" onclick="wizardNext()">Next <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>`;
+
+    } else if (wizardStep === 2) {
+      renderWizardTasksStep();
+
+    } else if (wizardStep === 3) {
+      const count = wizardData.tasks.length;
+      content.innerHTML = `
+        <div class="wiz-step-label">STEP 4 OF 4</div>
+        <div class="wiz-step-title">Ready to ride.</div>
+        <div class="wiz-step-sub">This current is about to go live in <strong>${wizardData.wave}</strong>.</div>
+        <div class="wiz-task-count">
+          <div class="wiz-task-count-num">${count}</div>
+          <div class="wiz-task-count-label">${count === 1 ? 'task' : 'tasks'} loaded</div>
+          <div class="wiz-task-count-sub">${count === 0 ? 'You can add tasks anytime from the current page.' : 'You can edit or add more from the current page.'}</div>
+        </div>
+        <div class="wiz-confirm-row">
+          <div class="wiz-confirm-icon">${getCategoryIcon(wizardData.category, 18)}</div>
+          <div class="wiz-confirm-text">
+            <div class="wiz-confirm-label">ACTIVATING IN</div>
+            <div class="wiz-confirm-value">${wizardData.wave} · ${wizardData.currentName}</div>
+          </div>
+        </div>`;
+      nav.innerHTML = `
+        <button class="wiz-btn-back" onclick="wizardBack()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2.2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+        <button class="wiz-btn-next" onclick="activateCurrent()">Activate <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>`;
+    }
+  }
+
+  function renderWizardTasksStep() {
+    const content = document.getElementById('wizStepContent');
+    const nav = document.getElementById('wizNav');
+    if (!content) return;
+    content.innerHTML = `
+      <div class="wiz-step-label">STEP 3 OF 4</div>
+      <div class="wiz-step-title">Add tasks</div>
+      <div class="wiz-step-sub">What needs to happen to move this current forward?</div>
+      <div class="wiz-task-list" id="wizTaskList">
+        ${wizardData.tasks.map((t, i) => `
+          <div class="wiz-task-row">
+            <div class="wiz-task-circle"></div>
+            <span class="wiz-task-name">${t}</span>
+            <button class="wiz-task-del" onclick="removeWizardTask(${i})">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>`).join('')}
+      </div>
+      <button class="wiz-add-task-btn" id="wizAddTaskBtn" onclick="addWizardTaskInput()">+ ADD TASK</button>
+      ${wizardData.intent ? `<button id="wizGenBtn" onclick="generateWizardTasks()" style="width:100%;margin-top:10px;padding:12px;background:rgba(30,58,95,0.05);border:1.5px solid rgba(30,58,95,0.15);border-radius:12px;font-size:13px;font-weight:600;color:#1E3A5F;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Generate Tasks with AI</button>` : ''}`;
+    if (nav) nav.innerHTML = `
+      <button class="wiz-btn-back" onclick="wizardBack()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2.2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+      <button class="wiz-btn-next" onclick="wizardNext()">Next <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>`;
+  }
+
+  function addWizardTaskInput() {
+    const list = document.getElementById('wizTaskList');
+    if (!list || document.getElementById('wizNewTaskRow')) return;
+    const row = document.createElement('div');
+    row.className = 'wiz-task-row';
+    row.id = 'wizNewTaskRow';
+    row.innerHTML = `
+      <div class="wiz-task-circle" style="flex-shrink:0;"></div>
+      <input class="wiz-new-task-input" id="wizNewTaskInput" type="text" placeholder="Task name..." />
+      <button onclick="confirmWizardTask()" style="background:#1E3A5F;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;">Add</button>`;
+    list.appendChild(row);
+    const input = document.getElementById('wizNewTaskInput');
+    if (input) {
+      input.focus();
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmWizardTask();
+        if (e.key === 'Escape') row.remove();
+      });
+    }
+  }
+
+  function confirmWizardTask() {
+    const input = document.getElementById('wizNewTaskInput');
+    if (!input) return;
+    const val = input.value.trim();
+    if (val) { wizardData.tasks.push(val); renderWizardTasksStep(); }
+    else { document.getElementById('wizNewTaskRow')?.remove(); }
+  }
+
+  function removeWizardTask(index) {
+    wizardData.tasks.splice(index, 1);
+    renderWizardTasksStep();
+  }
+
+  async function generateWizardTasks() {
+    const btn = document.getElementById('wizGenBtn');
+    const list = document.getElementById('wizTaskList');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<div class="wiz-spinner" style="width:18px;height:18px;border-width:2px;margin:0 auto;"></div>'; }
+    if (list) list.style.opacity = '0.5';
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 400,
+          messages: [{ role: 'user', content: `Generate a task list for this creative project current.\n\nCurrent: "${wizardData.currentName}"\nWave: "${wizardData.wave}"\nCategory: "${wizardData.category}"\nIntent: "${wizardData.intent}"\n\nGenerate 5-7 specific, actionable tasks. Each task: 3-8 words, starts with a verb. Return ONLY a JSON array of strings, no markdown:\n["Task one", "Task two", ...]` }]
+        })
+      });
+      const data = await response.json();
+      const text = (data.content?.[0]?.text || '[]').replace(/```json|```/g, '').trim();
+      const generated = JSON.parse(text);
+      if (Array.isArray(generated)) wizardData.tasks = generated;
+    } catch(e) { console.warn('Task generation failed:', e); }
+    renderWizardTasksStep();
+  }
+
+  function wizardNext() {
+    if (wizardStep === 1) {
+      const ta = document.getElementById('wizIntentInput');
+      if (ta) wizardData.intent = ta.value.trim();
+    }
+    if (wizardStep < 3) { wizardStep++; renderWizardStep(); }
+  }
+
+  function wizardBack() {
+    if (wizardStep > 0) { wizardStep--; renderWizardStep(); }
+  }
+</script>
+
+<script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
