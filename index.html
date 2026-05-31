@@ -3718,6 +3718,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     <div id="gtm-input">
       <div class="modal-field-label">DESCRIBE WHAT YOU WANT</div>
       <textarea class="wiz-textarea" id="gtm-prompt" style="height:130px;" placeholder="e.g. Generate a task for each of the 33 pages in the coloring book, plus a task for cover design and one for choosing a printing vendor"></textarea>
+      <div id="gtm-error" style="display:none;font-size:12px;color:#E05C5C;margin:8px 0 4px;line-height:1.5;"></div>
       <button class="modal-save-btn" onclick="runGenerateTasksFromCurrent()">Generate Tasks</button>
     </div>
 
@@ -3895,7 +3896,16 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     document.getElementById('gtm-results').style.display = 'none';
 
     document.getElementById('generateTasksModal').classList.add('open');
-    setTimeout(() => { const p = document.getElementById('gtm-prompt'); if (p) p.focus(); }, 100);
+    setTimeout(() => {
+      const p = document.getElementById('gtm-prompt');
+      if (p) {
+        p.focus();
+        p.addEventListener('input', () => {
+          const err = document.getElementById('gtm-error');
+          if (err) err.style.display = 'none';
+        }, { once: true });
+      }
+    }, 100);
   }
 
   function closeGenerateTasksModal() {
@@ -3925,6 +3935,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     document.getElementById('gtm-loading').style.display = '';
     document.getElementById('gtm-results').style.display = 'none';
 
+    let errorMsg = '';
     try {
       const existingNote = existingTasks.length
         ? `\n\nExisting tasks (do not duplicate):\n${existingTasks.map(t => '- ' + t).join('\n')}`
@@ -3934,18 +3945,22 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1000,
           messages: [{ role: 'user', content: `You are a creative project assistant. Generate tasks for this creative current.\n\nCurrent: "${current.name}"\nWave: "${wave ? wave.name : ''}"\nCategory: "${current.category}"\n\nThe person's request: "${userPrompt}"${existingNote}\n\nGenerate the tasks exactly as described. Each task should be short (4-10 words), specific, and start with a verb. Return ONLY a JSON array of strings, no markdown, no explanation:\n["Task one", "Task two", ...]` }]
         })
       });
 
       const data = await response.json();
-      const text = (data.content?.[0]?.text || '[]').replace(/```json|```/g, '').trim();
-      gtmGeneratedTasks = JSON.parse(text);
+      if (data.error) { errorMsg = data.error.message || 'API error'; throw new Error(errorMsg); }
+      const raw = data.content?.[0]?.text || '';
+      // Extract JSON array even if Claude wraps it in extra text
+      const match = raw.match(/\[[\s\S]*\]/);
+      gtmGeneratedTasks = match ? JSON.parse(match[0]) : [];
       if (!Array.isArray(gtmGeneratedTasks)) gtmGeneratedTasks = [];
     } catch(e) {
       console.warn('Generate tasks error:', e);
+      if (!errorMsg) errorMsg = e.message || 'Something went wrong';
       gtmGeneratedTasks = [];
     }
 
@@ -3953,8 +3968,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     if (!gtmGeneratedTasks.length) {
       document.getElementById('gtm-input').style.display = '';
-      const prompt = document.getElementById('gtm-prompt');
-      if (prompt) prompt.style.borderColor = '#E05C5C';
+      const errEl = document.getElementById('gtm-error');
+      if (errEl) { errEl.textContent = errorMsg || 'No tasks generated — try rephrasing your description.'; errEl.style.display = ''; }
       return;
     }
 
