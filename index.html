@@ -3529,8 +3529,6 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       const retro = placement.retrograde ? ' ℞' : '';
       moonEl.textContent = ([sid, trop].filter(Boolean).join(' · ') || '—') + retro;
     }
-    // Regenerate daily descriptions with new placements
-    regenerateDailyDescriptions(chart);
     // Visual feedback
     const btn = event.target;
     const orig = btn.textContent;
@@ -3589,81 +3587,11 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     }).join('');
   }
 
-  // ── AI DAILY DESCRIPTIONS (regenerate on chart save) ──
-  async function regenerateDailyDescriptions(chart) {
-    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const dayRulers = ['sun','moon','mars','mercury','jupiter','venus','saturn'];
-    const dayPlanetNames = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
-
-    // Build chart summary for prompt
-    const chartSummary = dayRulers.map((ruler, i) => {
-      const pl = chart[ruler] || {};
-      const sid  = [pl.sidSign, pl.sidHouse].filter(Boolean).join(' ');
-      const trop = [pl.tropSign, pl.tropHouse].filter(Boolean).join(' ');
-      const retro = pl.retrograde ? ' (retrograde)' : '';
-      return `${dayPlanetNames[i]}: Sidereal ${sid || 'unknown'} / Tropical ${trop || 'unknown'}${retro}`;
-    }).join('\n');
-
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: `You are a professional astrologer. Write 7 daily energy descriptions for a person with these natal placements:
-
-${chartSummary}
-
-Birth: September 20, 1991, 6:06 PM, Norfolk, VA.
-
-For each day write a 3-4 sentence reading based on that day's ruling planet and the person's natal placement of that planet. Speak directly as "you". Be specific to the sign and house. Grounded, mystical but practical. No generic platitudes.
-
-Sunday = Sun, Monday = Moon, Tuesday = Mars, Wednesday = Mercury, Thursday = Jupiter, Friday = Venus, Saturday = Saturn.
-
-Respond ONLY with valid JSON, no markdown, no backticks:
-{"0":{"themes":["theme1","theme2","theme3"],"body":"reading"},"1":{"themes":["theme1","theme2","theme3"],"body":"reading"},"2":{"themes":["theme1","theme2","theme3"],"body":"reading"},"3":{"themes":["theme1","theme2","theme3"],"body":"reading"},"4":{"themes":["theme1","theme2","theme3"],"body":"reading"},"5":{"themes":["theme1","theme2","theme3"],"body":"reading"},"6":{"themes":["theme1","theme2","theme3"],"body":"reading"}}`
-          }]
-        })
-      });
-      const data = await response.json();
-      const text = data.content?.[0]?.text?.trim() || '';
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      localStorage.setItem('daily_descriptions', JSON.stringify(parsed));
-      // Refresh today's card
-      loadDailyEnergy();
-      console.log('Daily descriptions regenerated');
-    } catch(e) {
-      console.warn('Failed to regenerate daily descriptions:', e);
-    }
-  }
-
-  // Override loadDailyEnergy to check for AI-generated descriptions first
-  // Store original as variable expression to avoid hoisting issue
-  const _loadDailyEnergyOrig = function() {
+  function loadDailyEnergy() {
     const todayIndex = new Date().getDay();
     const data = DAILY_ENERGY[todayIndex];
     if (!data) return;
     renderDailyEnergy(data.themes, data.body);
-  };
-
-  function loadDailyEnergy() {
-    const todayIndex = new Date().getDay();
-    try {
-      const saved = localStorage.getItem('daily_descriptions');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const data = parsed[todayIndex];
-        if (data && data.themes && data.body) {
-          renderDailyEnergy(data.themes, data.body);
-          return;
-        }
-      }
-    } catch(e) {}
-    _loadDailyEnergyOrig();
   }
 
   // Build chart string for transit prompt
