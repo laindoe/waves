@@ -35,7 +35,7 @@
     width: 390px;
     min-height: 100vh;
     background: transparent;
-    padding-bottom: 80px;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
     position: relative;
   }
 
@@ -308,7 +308,7 @@
     width: 390px;
     background: linear-gradient(to bottom, rgba(204,230,238,0) 0%, #cce6ee 28px);
     border-top: none;
-    padding: 12px 0 24px;
+    padding: 10px 0 calc(8px + env(safe-area-inset-bottom));
     display: flex;
     justify-content: space-around;
     align-items: center;
