@@ -1984,8 +1984,13 @@
     if (id === 'settings' && typeof renderSettingsWaveList === 'function') {
       renderSettingsWaveList();
     }
-    // Reset scroll to top on every page change
-    window.scrollTo(0, 0);
+    // Lock body scroll on ocean (content scrolls internally); unlock on all other pages
+    if (id === 'ocean') {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
+    }
     const page = document.getElementById('page-' + id);
     if (page) page.scrollTop = 0;
   }
