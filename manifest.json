@@ -2,7 +2,7 @@
   "name": "WAVES",
   "short_name": "WAVES",
   "description": "An emotional operating system for creative momentum.",
-  "start_url": "/",
+  "start_url": "/waves/",
   "display": "standalone",
   "background_color": "#E8E9F0",
   "theme_color": "#E8E9F0",
