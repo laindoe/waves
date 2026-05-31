@@ -3135,7 +3135,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': getApiKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1000,
           messages: [{ role: 'user', content: prompt }]
         })
@@ -4280,15 +4280,18 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': getApiKey(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 400,
           messages: [{ role: 'user', content: `Generate a task list for this creative project current.\n\nCurrent: "${wizardData.currentName}"\nWave: "${wizardData.wave}"\nCategory: "${wizardData.category}"\nIntent: "${wizardData.intent}"\n\nGenerate 5-7 specific, actionable tasks. Each task: 3-8 words, starts with a verb. Return ONLY a JSON array of strings, no markdown:\n["Task one", "Task two", ...]` }]
         })
       });
       const data = await response.json();
-      const text = (data.content?.[0]?.text || '[]').replace(/```json|```/g, '').trim();
-      const generated = JSON.parse(text);
-      if (Array.isArray(generated)) wizardData.tasks = generated;
+      const raw = (data.content?.[0]?.text || '').trim();
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (match) {
+        const generated = JSON.parse(match[0]);
+        if (Array.isArray(generated)) wizardData.tasks = generated;
+      }
     } catch(e) { console.warn('Task generation failed:', e); }
     renderWizardTasksStep();
   }
