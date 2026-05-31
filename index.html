@@ -1732,8 +1732,14 @@
     <!-- Task list -->
     <div class="cp-task-list" id="taskList"></div>
 
-    <!-- View Completed -->
-    <button class="cp-add-btn" onclick="addMicrotask()" style="width:100%;margin:8px 0 4px;">+ Add Microtask</button>
+    <!-- Add / Generate row -->
+    <div style="display:flex;gap:8px;margin:8px 0 4px;">
+      <button class="cp-add-btn" onclick="addMicrotask()" style="flex:1;">+ Add Task</button>
+      <button class="cp-add-btn" onclick="openGenerateTasksModal()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Generate
+      </button>
+    </div>
 
     <div class="cp-completed-toggle" onclick="toggleCompleted()">
       <span id="completedLabel">View Completed (3)</span>
@@ -3695,6 +3701,44 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   })();
 </script>
 
+<!-- GENERATE TASKS MODAL -->
+<div class="modal-overlay" id="generateTasksModal" onclick="closeGenerateTasksModalOverlay(event)">
+  <div class="modal-card" style="max-height:88vh;overflow-y:auto;">
+    <button class="modal-close" onclick="closeGenerateTasksModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <div class="modal-icon">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.6" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    <div class="modal-title">GENERATE TASKS</div>
+    <div class="modal-subtitle" id="gtm-subtitle">Loading...</div>
+
+    <!-- INPUT STATE -->
+    <div id="gtm-input">
+      <div class="modal-field-label">DESCRIBE WHAT YOU WANT</div>
+      <textarea class="wiz-textarea" id="gtm-prompt" style="height:130px;" placeholder="e.g. Generate a task for each of the 33 pages in the coloring book, plus a task for cover design and one for choosing a printing vendor"></textarea>
+      <button class="modal-save-btn" onclick="runGenerateTasksFromCurrent()">Generate Tasks</button>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div id="gtm-loading" style="display:none;">
+      <div class="wiz-loading">
+        <div class="wiz-spinner"></div>
+        <div class="wiz-loading-text">Generating your tasks...</div>
+      </div>
+    </div>
+
+    <!-- RESULTS STATE -->
+    <div id="gtm-results" style="display:none;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;color:#1E3A5F;margin-bottom:10px;" id="gtm-results-label">GENERATED TASKS</div>
+      <div id="gtm-task-list" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;margin-bottom:16px;"></div>
+      <button class="modal-save-btn" id="gtm-add-btn" onclick="confirmAddGeneratedTasks()">Add Tasks</button>
+      <button onclick="gtmBackToInput()" style="width:100%;margin-top:10px;padding:12px;background:none;border:1.5px solid rgba(30,58,95,0.15);border-radius:14px;font-size:13px;font-weight:600;color:#1E3A5F;cursor:pointer;font-family:'DM Sans',sans-serif;">Try Again</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT CURRENT MODAL -->
 <div class="modal-overlay" id="editCurrentModal" onclick="closeEditCurrentModal(event)">
   <div class="modal-card">
@@ -3825,6 +3869,142 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     renderWavesAccordion();
     renderTodayPage();
     showPage('wave-detail');
+  }
+</script>
+
+<script>
+  // ── GENERATE TASKS (from active current) ──
+  let gtmGeneratedTasks = [];
+
+  function openGenerateTasksModal() {
+    if (!currentPageCurrentId) return;
+    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
+    if (!current) return;
+    const wave = DB_WAVES.find(w => w.id === current.waveId);
+    const waveName = wave ? wave.name : '';
+
+    const subtitle = document.getElementById('gtm-subtitle');
+    if (subtitle) subtitle.textContent = current.name + (waveName ? ' · ' + waveName : '');
+
+    const prompt = document.getElementById('gtm-prompt');
+    if (prompt) prompt.value = '';
+
+    gtmGeneratedTasks = [];
+    document.getElementById('gtm-input').style.display = '';
+    document.getElementById('gtm-loading').style.display = 'none';
+    document.getElementById('gtm-results').style.display = 'none';
+
+    document.getElementById('generateTasksModal').classList.add('open');
+    setTimeout(() => { const p = document.getElementById('gtm-prompt'); if (p) p.focus(); }, 100);
+  }
+
+  function closeGenerateTasksModal() {
+    document.getElementById('generateTasksModal').classList.remove('open');
+  }
+
+  function closeGenerateTasksModalOverlay(e) {
+    if (e.target === document.getElementById('generateTasksModal')) closeGenerateTasksModal();
+  }
+
+  function gtmBackToInput() {
+    document.getElementById('gtm-results').style.display = 'none';
+    document.getElementById('gtm-input').style.display = '';
+  }
+
+  async function runGenerateTasksFromCurrent() {
+    const promptEl = document.getElementById('gtm-prompt');
+    const userPrompt = promptEl ? promptEl.value.trim() : '';
+    if (!userPrompt) { if (promptEl) promptEl.focus(); return; }
+
+    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
+    if (!current) return;
+    const wave = DB_WAVES.find(w => w.id === current.waveId);
+    const existingTasks = getTasksForCurrent(currentPageCurrentId).map(t => t.name);
+
+    document.getElementById('gtm-input').style.display = 'none';
+    document.getElementById('gtm-loading').style.display = '';
+    document.getElementById('gtm-results').style.display = 'none';
+
+    try {
+      const existingNote = existingTasks.length
+        ? `\n\nExisting tasks (do not duplicate):\n${existingTasks.map(t => '- ' + t).join('\n')}`
+        : '';
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: `You are a creative project assistant. Generate tasks for this creative current.\n\nCurrent: "${current.name}"\nWave: "${wave ? wave.name : ''}"\nCategory: "${current.category}"\n\nThe person's request: "${userPrompt}"${existingNote}\n\nGenerate the tasks exactly as described. Each task should be short (4-10 words), specific, and start with a verb. Return ONLY a JSON array of strings, no markdown, no explanation:\n["Task one", "Task two", ...]` }]
+        })
+      });
+
+      const data = await response.json();
+      const text = (data.content?.[0]?.text || '[]').replace(/```json|```/g, '').trim();
+      gtmGeneratedTasks = JSON.parse(text);
+      if (!Array.isArray(gtmGeneratedTasks)) gtmGeneratedTasks = [];
+    } catch(e) {
+      console.warn('Generate tasks error:', e);
+      gtmGeneratedTasks = [];
+    }
+
+    document.getElementById('gtm-loading').style.display = 'none';
+
+    if (!gtmGeneratedTasks.length) {
+      document.getElementById('gtm-input').style.display = '';
+      const prompt = document.getElementById('gtm-prompt');
+      if (prompt) prompt.style.borderColor = '#E05C5C';
+      return;
+    }
+
+    // Render results with per-task delete
+    const label = document.getElementById('gtm-results-label');
+    if (label) label.textContent = gtmGeneratedTasks.length + ' TASKS GENERATED';
+
+    const listEl = document.getElementById('gtm-task-list');
+    if (listEl) renderGtmTaskList(listEl);
+
+    const addBtn = document.getElementById('gtm-add-btn');
+    if (addBtn) addBtn.textContent = 'Add ' + gtmGeneratedTasks.length + ' Tasks';
+
+    document.getElementById('gtm-results').style.display = '';
+  }
+
+  function renderGtmTaskList(listEl) {
+    listEl.innerHTML = gtmGeneratedTasks.map((t, i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.5);border:1px solid rgba(30,58,95,0.08);border-radius:10px;" id="gtm-row-${i}">
+        <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(30,58,95,0.2);flex-shrink:0;"></div>
+        <span style="flex:1;font-size:13px;color:#1E3A5F;">${t}</span>
+        <button onclick="gtmRemoveTask(${i})" style="background:none;border:none;cursor:pointer;padding:2px;color:#C0CDD5;flex-shrink:0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>`).join('');
+  }
+
+  function gtmRemoveTask(index) {
+    gtmGeneratedTasks.splice(index, 1);
+    const listEl = document.getElementById('gtm-task-list');
+    const addBtn = document.getElementById('gtm-add-btn');
+    const label = document.getElementById('gtm-results-label');
+    if (listEl) renderGtmTaskList(listEl);
+    if (addBtn) addBtn.textContent = 'Add ' + gtmGeneratedTasks.length + ' Tasks';
+    if (label) label.textContent = gtmGeneratedTasks.length + ' TASKS GENERATED';
+  }
+
+  function confirmAddGeneratedTasks() {
+    if (!gtmGeneratedTasks.length || !currentPageCurrentId) return;
+    gtmGeneratedTasks.forEach((name, i) => {
+      DB_TASKS.push({ id: 't' + Date.now() + i, currentId: currentPageCurrentId, name, done: false });
+    });
+    save();
+    currentFilter = 'all';
+    document.getElementById('toggleAll').classList.add('active');
+    document.getElementById('toggleNext5').classList.remove('active');
+    renderTasks();
+    renderWavesAccordion();
+    renderTodayPage();
+    closeGenerateTasksModal();
   }
 </script>
 
