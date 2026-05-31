@@ -1797,7 +1797,7 @@
 <div class="page" id="page-settings">
 
   <header class="header">
-    <button class="back-btn" onclick="showPage(prevPage)">
+    <button class="back-btn" onclick="settingsBackBtn()">
       <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9l8 8" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <div class="logo">
@@ -1834,7 +1834,6 @@
             </div>
           </div>
           <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)"/>
-          <button onclick="saveProfile()" class="modal-save-btn" style="width:100%;padding:12px;">SAVE PROFILE</button>
         </div>
       </div>
     </div>
@@ -1995,13 +1994,26 @@
 <script>
   // ── PAGE NAV ──
   let prevPage = 'today';
+  let profileDirty = false;
+
   function saveSettingsAndBack() {
-    // Data is already saved via individual toggles/saves
-    // Just re-render everything and go back
+    saveProfile();
     renderWavesAccordion();
     renderTodayPage();
     renderOceanTabs();
     showPage(prevPage);
+  }
+
+  function settingsBackBtn() {
+    if (profileDirty) {
+      if (!confirm('You have unsaved profile changes. Click Done to save them, or OK to discard.')) return;
+      profileDirty = false;
+    }
+    renderWavesAccordion();
+    renderTodayPage();
+    renderOceanTabs();
+    showPage(prevPage);
+  }
   }
 
   function openSettings() {
@@ -3460,6 +3472,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function previewProfileName() {
+    profileDirty = true;
     const val = document.getElementById('profileNameInput').value;
     const initial = val.trim() ? val.trim()[0].toUpperCase() : '?';
     const profile = getProfile();
@@ -3478,16 +3491,20 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       const profile = getProfile();
       profile.avatar = e.target.result;
       localStorage.setItem('waves_profile', JSON.stringify(profile));
+      profileDirty = false;
       renderAllAvatars();
     };
     reader.readAsDataURL(file);
   }
 
   function saveProfile() {
-    const name = document.getElementById('profileNameInput').value.trim();
+    const nameInput = document.getElementById('profileNameInput');
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
     const profile = getProfile();
     profile.name = name;
     localStorage.setItem('waves_profile', JSON.stringify(profile));
+    profileDirty = false;
     renderAllAvatars();
   }
 
