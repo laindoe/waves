@@ -794,19 +794,36 @@
 
 
   /* ── OCEAN PAGE ── */
-  .ocean-page-content { padding: 20px 20px 20px; }
+  #page-ocean.active {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  #page-ocean .header { flex: 0 0 auto; }
+  .ocean-page-content {
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  .ocean-page-header { padding: 20px 0 0; flex: 0 0 auto; }
+  #oceanTabContent {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 80px;
+  }
 
   /* Tabs */
   .ocean-tabs {
     display: flex;
     align-items: center;
     border-bottom: 1px solid rgba(30,58,95,0.1);
+    flex: 0 0 auto;
     margin-bottom: 20px;
     overflow-x: auto;
-    position: sticky;
-    top: 0;
-    background: linear-gradient(160deg, #dde8f5 0%, #e4eaf5 30%, #d8eaf0 60%, #cce6ee 100%);
-    z-index: 10;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
@@ -1633,14 +1650,16 @@
 
   <div class="ocean-page-content">
 
-    <div class="aw-heading">OCEAN</div>
-    <div class="aw-sub">All your currents, by wave.</div>
+    <div class="ocean-page-header">
+      <div class="aw-heading">OCEAN</div>
+      <div class="aw-sub">All your currents, by wave.</div>
+    </div>
 
     <!-- WAVE TABS -->
     <div class="ocean-tabs" id="ocean-tabs-bar"></div>
 
     <!-- ADD NEW CURRENT -->
-    <button class="ocean-add-btn" onclick="addNewCurrent()">
+    <button class="ocean-add-btn" onclick="addNewCurrent()" style="flex:0 0 auto;">
       <svg width="22" height="14" viewBox="0 0 26 14" fill="none">
         <path d="M1 7 C4 3, 8 3, 13 7 C18 11, 22 11, 25 7" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"/>
       </svg>
