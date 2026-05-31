@@ -816,48 +816,44 @@
     padding-bottom: 80px;
   }
 
-  /* Tabs */
-  .ocean-tabs {
+  /* Wave selector */
+  .ocean-wave-selector {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     border-bottom: 1px solid rgba(30,58,95,0.1);
     flex: 0 0 auto;
     margin-bottom: 20px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    padding: 8px 0;
   }
-  .ocean-tabs::-webkit-scrollbar { display: none; }
-
-  .ocean-tab {
-    flex: 0 0 auto; text-align: center;
-    padding: 12px 16px;
-    font-size: 13px; font-weight: 500;
-    color: #8A9BAA; cursor: pointer;
-    white-space: nowrap;
-    position: relative;
-    transition: color 0.2s;
-    white-space: nowrap;
+  .ocean-wave-arrow {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border-radius: 50%;
+    color: #1E3A5F; opacity: 0.4;
+    transition: opacity 0.15s;
+    flex: 0 0 auto;
+    -webkit-tap-highlight-color: transparent;
   }
-
-  .ocean-tab.active {
-    color: #1E3A5F; font-weight: 600;
+  .ocean-wave-arrow.enabled { opacity: 1; }
+  .ocean-wave-arrow.enabled:active { background: rgba(30,58,95,0.08); }
+  .ocean-wave-label {
+    flex: 1; text-align: center;
+    font-size: 15px; font-weight: 600;
+    color: #1E3A5F; letter-spacing: 0.02em;
   }
-
-  .ocean-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px; left: 10%; right: 10%;
-    height: 2px;
-    background: #1E3A5F;
-    border-radius: 2px;
+  .ocean-wave-dots {
+    display: flex; gap: 5px;
+    justify-content: center;
+    padding-bottom: 8px;
+    flex: 0 0 auto;
   }
-
-  .ocean-tab-divider {
-    width: 1px; height: 16px;
-    background: rgba(30,58,95,0.12);
-    flex-shrink: 0;
+  .ocean-wave-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(30,58,95,0.18);
+    transition: background 0.2s;
   }
+  .ocean-wave-dot.active { background: #1E3A5F; }
 
   /* Add button */
   .ocean-add-btn {
@@ -1655,8 +1651,8 @@
       <div class="aw-sub">All your currents, by wave.</div>
     </div>
 
-    <!-- WAVE TABS -->
-    <div class="ocean-tabs" id="ocean-tabs-bar"></div>
+    <!-- WAVE SELECTOR -->
+    <div class="ocean-wave-selector" id="ocean-tabs-bar"></div>
 
     <!-- ADD NEW CURRENT -->
     <button class="ocean-add-btn" onclick="addNewCurrent()" style="flex:0 0 auto;">
@@ -2332,17 +2328,23 @@
     if (!activeOceanWaveId || !waves.find(w => w.id === activeOceanWaveId)) {
       activeOceanWaveId = waves[0].id;
     }
-    bar.innerHTML = waves.map((w, i) =>
-      (i > 0 ? '<div class="ocean-tab-divider"></div>' : '') +
-      `<div class="ocean-tab ${w.id === activeOceanWaveId ? 'active' : ''}" onclick="switchOceanTab('${w.id}')">${w.name}</div>`
-    ).join('');
+    const idx = waves.findIndex(w => w.id === activeOceanWaveId);
+    const canPrev = idx > 0;
+    const canNext = idx < waves.length - 1;
+    bar.innerHTML = `
+      <div class="ocean-wave-arrow ${canPrev ? 'enabled' : ''}" onclick="${canPrev ? `switchOceanTab('${waves[idx-1].id}')` : ''}">
+        <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><path d="M7 1L1 7l6 6"/></svg>
+      </div>
+      <div class="ocean-wave-label">${waves[idx].name}</div>
+      <div class="ocean-wave-arrow ${canNext ? 'enabled' : ''}" onclick="${canNext ? `switchOceanTab('${waves[idx+1].id}')` : ''}">
+        <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>
+      </div>`;
     renderOceanContent();
   }
 
   function switchOceanTab(waveId) {
     activeOceanWaveId = waveId;
-    document.querySelectorAll('.ocean-tab').forEach(t => t.classList.toggle('active', t.textContent === DB_WAVES.find(w => w.id === waveId)?.name));
-    renderOceanContent();
+    renderOceanTabs();
   }
 
   function renderOceanContent() {
