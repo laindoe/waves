@@ -2641,8 +2641,20 @@
     const task = DB_TASKS.find(t => t.id === id);
     if (task) {
       task.done = !task.done;
-      if (task.done) { task.completedAt = todayStr(); recordActivity(); }
-      else { task.completedAt = null; }
+      if (task.done) {
+        task.completedAt = todayStr();
+        recordActivity();
+      } else {
+        task.completedAt = null;
+        // If no tasks remain done today, remove today from activity so streak doesn't count it
+        const today = todayStr();
+        const stillDoneToday = DB_TASKS.filter(t => t.done && t.completedAt === today).length;
+        if (stillDoneToday === 0) {
+          const activity = JSON.parse(localStorage.getItem('waves_activity') || '{}');
+          delete activity[today];
+          localStorage.setItem('waves_activity', JSON.stringify(activity));
+        }
+      }
       save();
       renderTasks();
       renderWavesAccordion();
