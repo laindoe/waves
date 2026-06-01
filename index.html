@@ -1825,6 +1825,24 @@
       </div>
     </div>
 
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <div class="settings-section-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.42"/></svg>
+        </div>
+        <div>
+          <div class="settings-section-title">MOMENTUM</div>
+          <div class="settings-section-sub">Reset your streak if you need a fresh start.</div>
+        </div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-row" style="border:none;">
+          <div class="settings-row-label">Day Streak</div>
+          <button id="resetStreakBtn" onclick="resetStreak()" style="padding:8px 16px;background:none;border:1.5px solid rgba(30,58,95,0.2);border-radius:10px;font-size:12px;font-weight:600;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.04em;">Reset</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div><!-- end page-settings -->
 
@@ -2570,6 +2588,34 @@
     const d = todayStr();
     activity[d] = (activity[d] || 0) + 1;
     localStorage.setItem(key, JSON.stringify(activity));
+  }
+
+  function resetStreak() {
+    const btn = document.getElementById('resetStreakBtn');
+    if (btn.dataset.confirm !== 'true') {
+      btn.textContent = 'Are you sure?';
+      btn.style.color = '#E05C5C';
+      btn.style.borderColor = 'rgba(224,92,92,0.3)';
+      btn.dataset.confirm = 'true';
+      setTimeout(() => {
+        btn.textContent = 'Reset';
+        btn.style.color = '#8A9BAA';
+        btn.style.borderColor = 'rgba(30,58,95,0.2)';
+        btn.dataset.confirm = '';
+      }, 3000);
+      return;
+    }
+    localStorage.removeItem('waves_activity');
+    btn.textContent = 'Cleared ✓';
+    btn.style.color = '#3EC6D8';
+    btn.style.borderColor = 'rgba(62,198,216,0.3)';
+    btn.dataset.confirm = '';
+    setTimeout(() => {
+      btn.textContent = 'Reset';
+      btn.style.color = '#8A9BAA';
+      btn.style.borderColor = 'rgba(30,58,95,0.2)';
+    }, 2000);
+    renderTodayPage();
   }
 
   function calcStreak() {
