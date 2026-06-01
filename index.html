@@ -4358,15 +4358,35 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function handleEcPasteEvent(event) {
+    // Try clipboardData.items (desktop/Android)
     const items = (event.clipboardData || event.originalEvent?.clipboardData)?.items;
-    if (!items) return;
-    for (const item of Array.from(items)) {
-      if (item.type.startsWith('image/')) {
-        event.preventDefault();
-        _applyEcLogoBlob(item.getAsFile());
-        return;
+    if (items) {
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          event.preventDefault();
+          _applyEcLogoBlob(item.getAsFile());
+          return;
+        }
       }
     }
+    // iOS Safari inserts an <img> into the contenteditable DOM instead
+    setTimeout(() => {
+      const pz = document.getElementById('ecPasteZone');
+      if (!pz) return;
+      const img = pz.querySelector('img');
+      if (!img) return;
+      const src = img.src;
+      pz.innerHTML = '';
+      if (src.startsWith('data:')) {
+        ecLogoDataUrl = src;
+        ecEmoji = null; ecIconKey = null;
+        document.getElementById('ecClearIconBtn').style.display = 'inline';
+        document.getElementById('ecClearLogoBtn').style.display = 'none';
+        updateEcIconPreview(null);
+      } else if (src.startsWith('blob:') || src.startsWith('http')) {
+        fetch(src).then(r => r.blob()).then(blob => _applyEcLogoBlob(blob));
+      }
+    }, 100);
   }
 
   function clearEcLogo() {
