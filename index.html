@@ -1278,9 +1278,12 @@
         <!-- SLIDE 3: Today's Suggestion -->
         <div class="tide-slide">
           <div class="tide-slide-inner">
-            <div class="ts3-header">
-              <div class="ts3-title">TODAY'S SUGGESTION</div>
-              <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.12em;" id="ts3-planet-tag"></div>
+            <div class="ts2-header">
+              <span style="font-size:28px;line-height:1;">🌞</span>
+              <div>
+                <div class="ts2-title">TODAY'S SUGGESTION</div>
+                <div style="font-size:11px;color:#8A9BAA;letter-spacing:0.06em;" id="ts3-planet-tag"></div>
+              </div>
             </div>
             <div class="ts3-row">
               <div class="ts3-icon-box" id="ts3-cat-icon">
@@ -3114,7 +3117,7 @@
   };
 
   function getMoonPhase() {
-    const knownNewMoon = new Date("2026-01-17T02:25:00Z");
+    const knownNewMoon = new Date("2000-01-06T18:14:00Z");
     const lunarCycle = 29.53058867;
     const now = new Date();
     const daysSince = (now - knownNewMoon) / (1000 * 60 * 60 * 24);
@@ -3205,7 +3208,7 @@
 
     // Set planet tag
     const tag = document.getElementById('ts3-planet-tag');
-    if (tag) tag.textContent = planetName.toUpperCase() + ' DAY';
+    if (tag) tag.textContent = planetName;
 
     // Get all active currents with tasks remaining
     const activeCurrents = DB_CURRENTS.filter(c => c.active);
@@ -4047,7 +4050,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         var planetName = DAY_NAMES[todayIndex];
 
         var tag = document.getElementById('ts3-planet-tag');
-        if (tag) tag.textContent = planetName.toUpperCase() + ' DAY';
+        if (tag) tag.textContent = planetName;
 
         // Access data from main script globals
         if (typeof DB_CURRENTS === 'undefined' || typeof DB_TASKS === 'undefined') return;
