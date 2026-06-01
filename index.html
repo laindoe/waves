@@ -1287,7 +1287,7 @@
             </div>
             <div class="ts3-row">
               <div class="ts3-icon-box" id="ts3-cat-icon">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 C5 8,8 8,12 12 C16 16,19 16,22 12"/></svg>
               </div>
               <div class="ts3-content">
                 <div class="ts3-label">FOCUS CURRENT</div>
@@ -1298,7 +1298,7 @@
             <div class="ts3-divider"></div>
             <div class="ts3-row">
               <div class="ts3-icon-sm">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 C5 8,8 8,12 12 C16 16,19 16,22 12"/></svg>
               </div>
               <div class="ts3-content">
                 <div class="ts3-label">SUGGESTED TASK</div>
@@ -1308,7 +1308,7 @@
             <div class="ts3-divider"></div>
             <div class="ts3-row">
               <div class="ts3-icon-sm">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 C5 8,8 8,12 12 C16 16,19 16,22 12"/></svg>
               </div>
               <div class="ts3-content">
                 <div class="ts3-label">WHY TODAY</div>
@@ -4081,7 +4081,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         // Update the focus current icon to match category
         var iconBox = document.getElementById('ts3-cat-icon');
         if (iconBox) {
-          iconBox.innerHTML = getCurrentIcon(best.current, 26).replace('stroke="#5A6A7A"', 'stroke="#1E3A5F"');
+          iconBox.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 C5 8,8 8,12 12 C16 16,19 16,22 12"/></svg>';
         }
       } catch(e) {
         console.warn('Suggestion engine error:', e);
