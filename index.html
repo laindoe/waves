@@ -797,7 +797,7 @@
   #page-ocean.active {
     display: flex;
     flex-direction: column;
-    height: 100dvh;
+    height: calc(100dvh - 60px - env(safe-area-inset-bottom));
     overflow: hidden;
   }
   #page-ocean .header { flex: 0 0 auto; }
