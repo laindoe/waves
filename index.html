@@ -4278,14 +4278,22 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     renderEcIconGrid();
   }
 
+  function _forceInputClear(el) {
+    if (!el) return;
+    try {
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(el, '');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    } catch(e) { el.value = ''; }
+  }
+
   function clearEcIcon() {
     ecEmoji = null; ecIconKey = null; ecLogoDataUrl = null;
     document.getElementById('ecLogoUpload').value = '';
     document.getElementById('ecClearLogoBtn').style.display = 'none';
-    const inp = document.getElementById('ec-emoji-input');
-    if (inp) inp.value = '';
-    const gi = document.getElementById('ec-genmoji-input');
-    if (gi) gi.value = '';
+    _forceInputClear(document.getElementById('ec-emoji-input'));
+    _forceInputClear(document.getElementById('ec-genmoji-input'));
+    switchEcTab('emoji');
     renderEcIconGrid();
     updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
@@ -4309,12 +4317,16 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     const emojiInput = document.getElementById('ec-emoji-input');
     if (emojiInput) emojiInput.value = ecEmoji || '';
+    const genInput = document.getElementById('ec-genmoji-input');
+    if (genInput) genInput.value = '';
+
     renderEcIconGrid();
-    switchEcTab('emoji');
+    if (ecLogoDataUrl)  switchEcTab('upload');
+    else if (ecIconKey) switchEcTab('icons');
+    else                switchEcTab('emoji');
     updateEcIconPreview(current);
 
     document.getElementById('ecClearLogoBtn').style.display = ecLogoDataUrl ? 'inline' : 'none';
-    
 
     document.getElementById('editCurrentModal').classList.add('open');
   }
