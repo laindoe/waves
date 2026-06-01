@@ -4182,18 +4182,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     </div>
     <div style="border-radius:12px;overflow:hidden;background:rgba(30,58,95,0.04);margin-bottom:8px;">
       <div id="ecTabEmoji" style="padding:12px;">
-        <div style="display:flex;gap:10px;">
-          <div style="flex:1;">
-            <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:5px;text-align:center;">EMOJI</div>
-            <input id="ec-emoji-input" type="text" oninput="onEcEmojiInput(this)"
-              style="width:100%;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
-          </div>
-          <div style="flex:1;">
-            <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:5px;text-align:center;">GENMOJI</div>
-            <input id="ec-genmoji-input" type="text" oninput="onEcEmojiInput(this)"
-              style="width:100%;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
-          </div>
-        </div>
+        <input id="ec-emoji-input" type="text" oninput="onEcEmojiInput(this)"
+          style="width:100%;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
         <button onclick="clearEcIcon()" style="margin-top:8px;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:12px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Clear</button>
       </div>
       <div id="ecTabIcons" style="display:none;max-height:160px;overflow-y:auto;padding:8px;">
@@ -4205,6 +4195,11 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           Upload Image
         </label>
         <input type="file" id="ecLogoUpload" accept="image/*" style="display:none;" onchange="handleEcLogoUpload(event)"/>
+        <div style="margin-top:14px;text-align:left;">
+          <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:6px;">OR PASTE GENMOJI</div>
+          <div id="ecPasteZone" contenteditable="true" onpaste="handleEcPasteEvent(event)"
+            style="width:100%;min-height:52px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;padding:12px;font-size:13px;color:#8A9BAA;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;-webkit-user-select:text;user-select:text;display:flex;align-items:center;justify-content:center;overflow:hidden;">Long-press → Paste</div>
+        </div>
         <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;margin-top:8px;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
       </div>
     </div>
@@ -4284,8 +4279,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     document.getElementById('ecClearLogoBtn').style.display = 'none';
     const inp = document.getElementById('ec-emoji-input');
     if (inp) inp.value = '';
-    const gi = document.getElementById('ec-genmoji-input');
-    if (gi) gi.value = '';
+    const pz = document.getElementById('ecPasteZone');
+    if (pz) pz.innerHTML = 'Long-press → Paste';
     switchEcTab('emoji');
     renderEcIconGrid();
     updateEcIconPreview(null);
@@ -4310,8 +4305,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     const emojiInput = document.getElementById('ec-emoji-input');
     if (emojiInput) emojiInput.value = ecEmoji || '';
-    const genInput = document.getElementById('ec-genmoji-input');
-    if (genInput) genInput.value = '';
+    const pz = document.getElementById('ecPasteZone');
+    if (pz && !ecLogoDataUrl) pz.innerHTML = 'Long-press → Paste';
 
     renderEcIconGrid();
     if (ecLogoDataUrl)  switchEcTab('upload');
@@ -4393,8 +4388,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       if (src.startsWith('data:')) {
         ecLogoDataUrl = src;
         ecEmoji = null; ecIconKey = null;
-        
-        document.getElementById('ecClearLogoBtn').style.display = 'none';
+        document.getElementById('ecClearLogoBtn').style.display = 'inline';
         updateEcIconPreview(null);
       } else if (src.startsWith('blob:') || src.startsWith('http')) {
         fetch(src).then(r => r.blob()).then(blob => _applyEcLogoBlob(blob));
