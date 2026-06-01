@@ -890,9 +890,18 @@
 
   .ocean-current-list { display: flex; flex-direction: column; gap: 8px; }
 
+  .drag-handle {
+    width: 24px; height: 28px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: grab; touch-action: none; margin-right: 6px; opacity: 0.5;
+  }
+  .drag-placeholder {
+    border-radius: 12px; border: 1.5px dashed rgba(62,198,216,0.4);
+    background: rgba(62,198,216,0.06);
+  }
+
   .ocean-current-row {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px;
+    padding: 12px 14px 12px 10px;
     background: #FFFFFF;
     border-radius: 12px;
     border: 1px solid rgba(30,58,95,0.08);
@@ -2417,11 +2426,21 @@
     container.innerHTML = Object.entries(byCategory).map(([cat, currents]) => `
       <div class="ocean-category">
         <div class="ocean-cat-label">${cat}</div>
-        <div class="ocean-current-list">
+        <div class="ocean-current-list" data-category="${cat}">
           ${currents.map(c => `
-            <div class="ocean-current-row">
+            <div class="ocean-current-row" data-current-id="${c.id}">
+              <div class="drag-handle">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="4" cy="3" r="1.3" fill="#9AACB8"/>
+                  <circle cx="10" cy="3" r="1.3" fill="#9AACB8"/>
+                  <circle cx="4" cy="7" r="1.3" fill="#9AACB8"/>
+                  <circle cx="10" cy="7" r="1.3" fill="#9AACB8"/>
+                  <circle cx="4" cy="11" r="1.3" fill="#9AACB8"/>
+                  <circle cx="10" cy="11" r="1.3" fill="#9AACB8"/>
+                </svg>
+              </div>
               <span class="ocean-current-name">${c.name}</span>
-              <div style="display:flex;align-items:center;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-left:auto;padding-left:8px;">
                 <button class="ocean-activate-btn" onclick="openAddToWaveModal('${c.name}', '${wave.name}', '${c.category}')" title="Add to wave">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#1E3A5F" stroke-width="1.8" stroke-linecap="round">
                     <line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/>
@@ -2436,6 +2455,7 @@
         </div>
       </div>
     `).join('') || '<div style="padding:20px;text-align:center;color:#8A9BAA;font-size:13px;">No currents in backlog.</div>';
+    initOceanDragDrop();
   }
 
   function deleteOceanCurrent(id) {
@@ -2443,6 +2463,77 @@
     DB_TASKS = DB_TASKS.filter(t => t.currentId !== id);
     save();
     renderOceanTabs();
+  }
+
+  function initOceanDragDrop() {
+    document.querySelectorAll('.ocean-current-list').forEach(list => {
+      let dragging = null, clone = null, placeholder = null, cloneOffsetY = 0;
+
+      list.addEventListener('touchstart', e => {
+        const handle = e.target.closest('.drag-handle');
+        if (!handle) return;
+        e.preventDefault();
+        dragging = handle.closest('.ocean-current-row');
+        if (!dragging) return;
+
+        const touch = e.touches[0];
+        const rect = dragging.getBoundingClientRect();
+        cloneOffsetY = touch.clientY - rect.top;
+
+        placeholder = document.createElement('div');
+        placeholder.className = 'drag-placeholder';
+        placeholder.style.height = rect.height + 'px';
+        list.insertBefore(placeholder, dragging);
+        dragging.style.opacity = '0';
+
+        clone = dragging.cloneNode(true);
+        clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;opacity:0.96;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.15);border-radius:12px;transform:scale(1.02);`;
+        document.body.appendChild(clone);
+      }, { passive: false });
+
+      list.addEventListener('touchmove', e => {
+        if (!dragging) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        clone.style.top = (touch.clientY - cloneOffsetY) + 'px';
+
+        clone.style.display = 'none';
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        clone.style.display = '';
+        if (!el) return;
+
+        const row = el.closest('.ocean-current-row');
+        if (row && row !== dragging && row.closest('.ocean-current-list') === list) {
+          const r = row.getBoundingClientRect();
+          if (touch.clientY < r.top + r.height / 2) {
+            list.insertBefore(placeholder, row);
+          } else {
+            list.insertBefore(placeholder, row.nextSibling);
+          }
+        }
+      }, { passive: false });
+
+      list.addEventListener('touchend', () => {
+        if (!dragging) return;
+        list.insertBefore(dragging, placeholder);
+        dragging.style.opacity = '';
+        placeholder.remove();
+        clone.remove();
+
+        // Persist new order into DB_CURRENTS
+        const newIds = Array.from(list.querySelectorAll('.ocean-current-row')).map(r => r.dataset.currentId);
+        const newSet = new Set(newIds);
+        let insertIdx = DB_CURRENTS.findIndex(c => newSet.has(c.id));
+        if (insertIdx < 0) insertIdx = 0;
+        const remaining = DB_CURRENTS.filter(c => !newSet.has(c.id));
+        const reordered = newIds.map(id => DB_CURRENTS.find(c => c.id === id)).filter(Boolean);
+        remaining.splice(insertIdx, 0, ...reordered);
+        DB_CURRENTS = remaining;
+        save();
+
+        dragging = null; clone = null; placeholder = null;
+      }, { passive: false });
+    });
   }
 
   function populateCurrentCategories() {
