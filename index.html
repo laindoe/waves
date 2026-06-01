@@ -819,7 +819,7 @@
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+    padding-bottom: 0;
     scrollbar-width: none;
   }
   #oceanTabContent::-webkit-scrollbar { display: none; }
@@ -2435,6 +2435,7 @@
         </div>
       </div>
     `).join('') || '<div style="padding:20px;text-align:center;color:#8A9BAA;font-size:13px;">No currents in backlog.</div>';
+    container.insertAdjacentHTML('beforeend', '<div style="height:120px;flex-shrink:0;"></div>');
     initOceanDragDrop();
   }
 
