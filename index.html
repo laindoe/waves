@@ -4178,9 +4178,10 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       </div>
     </div>
     <div style="border-radius:12px;overflow:hidden;background:rgba(30,58,95,0.04);margin-bottom:8px;">
-      <div id="ecTabEmoji" style="padding:14px;">
-        <input id="ec-emoji-input" type="text" maxlength="4" placeholder="Paste emoji…" oninput="onEcEmojiInput(this)"
-          style="width:80px;padding:6px 10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:18px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;"/>
+      <div id="ecTabEmoji" style="padding:12px;display:flex;align-items:center;gap:12px;">
+        <input id="ec-emoji-input" type="text" maxlength="4" oninput="onEcEmojiInput(this)"
+          style="width:64px;padding:6px 10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:18px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;"/>
+        <button id="ecClearIconBtn" onclick="clearEcIcon()" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:13px;padding:0;font-family:'DM Sans',sans-serif;">Remove icon</button>
       </div>
       <div id="ecTabIcons" style="display:none;max-height:160px;overflow-y:auto;padding:8px;">
         <div id="ec-icon-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;"></div>
@@ -4195,7 +4196,6 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;margin-top:6px;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
       </div>
     </div>
-    <button id="ecClearIconBtn" onclick="clearEcIcon()" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:0 0 14px;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove icon</button>
 
     <!-- Name -->
     <div class="modal-field-label">CURRENT NAME</div>
