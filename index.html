@@ -4173,7 +4173,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     <!-- Icon picker -->
     <div class="modal-field-label">ICON</div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <div id="ec-icon-preview" style="width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(30,58,95,0.12);background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div id="ec-icon-preview" style="width:64px;height:64px;border-radius:14px;border:1.5px solid rgba(30,58,95,0.12);background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
       <div style="flex:1;display:flex;gap:4px;">
         <button id="ec-tab-btn-emoji"  onclick="switchEcTab('emoji')"  style="flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;background:#1E3A5F;color:white;">Emoji</button>
         <button id="ec-tab-btn-icons"  onclick="switchEcTab('icons')"  style="flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;background:rgba(30,58,95,0.08);color:#5A6A7A;">Icons</button>
@@ -4196,7 +4196,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         </label>
         <input type="file" id="ecLogoUpload" accept="image/*" style="display:none;" onchange="handleEcLogoUpload(event)"/>
         <div style="margin-top:14px;text-align:left;">
-          <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:6px;">OR PASTE GENMOJI</div>
+          <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:6px;">CHOOSE GENMOJI</div>
           <div id="ecPasteZone" contenteditable="true" onpaste="handleEcPasteEvent(event)"
             style="width:100%;min-height:52px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;padding:12px;font-size:13px;color:#8A9BAA;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;-webkit-user-select:text;user-select:text;display:flex;align-items:center;justify-content:center;overflow:hidden;">Long-press → Paste</div>
         </div>
@@ -4248,7 +4248,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function onEcEmojiInput(input) {
-    ecEmoji = [...input.value].slice(0, 2).join('') || null;
+    // Use Intl.Segmenter to grab the first complete grapheme cluster (handles ZWJ sequences like 🤷‍♀️)
+    const segs = Intl.Segmenter ? [...new Intl.Segmenter().segment(input.value)].map(s => s.segment) : [...input.value];
+    ecEmoji = segs.length > 0 ? segs[0] : null;
     ecIconKey = null; ecLogoDataUrl = null;
     document.getElementById('ecClearLogoBtn').style.display = 'none';
     updateEcIconPreview(null);
