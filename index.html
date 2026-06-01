@@ -745,14 +745,16 @@
   /* Task items */
   .cp-task-list { display: flex; flex-direction: column; }
 
-  .cp-task-swipe-wrap {
-    position: relative;
-    overflow: hidden;
+  .cp-task-swipe-wrap { overflow: hidden; }
+
+  .cp-task-swipe-inner {
+    display: flex; align-items: stretch;
+    touch-action: pan-y;
+    transition: transform 0.25s ease;
   }
 
   .cp-task-swipe-actions {
-    position: absolute; right: 0; top: 0; bottom: 0;
-    width: 112px; display: flex; align-items: stretch;
+    flex: 0 0 112px; display: flex; align-items: stretch;
   }
 
   .cp-task-swipe-edit-btn, .cp-task-swipe-delete-btn {
@@ -764,13 +766,10 @@
   .cp-task-swipe-delete-btn { background: none; }
 
   .cp-task-item {
+    flex: 0 0 100%;
     display: flex; align-items: center; gap: 12px;
     padding: 13px 4px;
     border-bottom: 1px solid rgba(30,58,95,0.06);
-    touch-action: pan-y;
-    transition: transform 0.25s ease;
-    background: white;
-    position: relative;
   }
 
   .cp-task-swipe-wrap:last-child .cp-task-item { border-bottom: none; }
@@ -2641,20 +2640,22 @@
 
     list.innerHTML = display.map(t => `
       <div class="cp-task-swipe-wrap" data-task-id="${t.id}">
-        <div class="cp-task-swipe-actions">
-          <button class="cp-task-swipe-edit-btn" onclick="editTaskInline('${t.id}')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3EC6D8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="cp-task-swipe-delete-btn" onclick="deleteTask('${t.id}')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05C5C" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <div class="cp-task-item" id="task-${t.id}" data-task-id="${t.id}">
-          <div class="cp-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask('${t.id}')">
-            ${t.done ? '<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+        <div class="cp-task-swipe-inner">
+          <div class="cp-task-item" id="task-${t.id}" data-task-id="${t.id}">
+            <div class="cp-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask('${t.id}')">
+              ${t.done ? '<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+            </div>
+            <span class="cp-task-name ${t.done ? 'done' : ''}" ondblclick="editTaskInline('${t.id}')">${t.name}</span>
+            <svg class="cp-task-drag" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
           </div>
-          <span class="cp-task-name ${t.done ? 'done' : ''}" ondblclick="editTaskInline('${t.id}')">${t.name}</span>
-          <svg class="cp-task-drag" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+          <div class="cp-task-swipe-actions">
+            <button class="cp-task-swipe-edit-btn" onclick="editTaskInline('${t.id}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3EC6D8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="cp-task-swipe-delete-btn" onclick="deleteTask('${t.id}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05C5C" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     `).join('');
@@ -2797,7 +2798,7 @@
   }
 
   function editTaskInline(id) {
-    if (_taskOpenRow) { _taskOpenRow.style.transform = 'translateX(0)'; _taskOpenRow = null; }
+    if (_taskOpenRow) { _taskOpenRow.style.transition = 'transform 0.25s ease'; _taskOpenRow.style.transform = 'translateX(0)'; _taskOpenRow = null; }
     const el = document.querySelector(`#task-${id} .cp-task-name`);
     if (!el || el.querySelector('input')) return;
     const task = DB_TASKS.find(t => t.id === id);
@@ -2826,6 +2827,10 @@
   function initTaskDragDrop() {
     const list = document.getElementById('taskList');
     if (!list) return;
+    if (list._dragAbort) list._dragAbort.abort();
+    const ac = new AbortController();
+    list._dragAbort = ac;
+    const sig = ac.signal;
     let dragging = null, clone = null, placeholder = null, cloneOffsetY = 0;
 
     list.addEventListener('touchstart', e => {
@@ -2843,9 +2848,9 @@
       list.insertBefore(placeholder, dragging);
       dragging.style.opacity = '0';
       clone = dragging.cloneNode(true);
-      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;opacity:0.96;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,0.12);background:white;border-radius:8px;`;
+      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;opacity:0.95;pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,0.13);border-radius:8px;overflow:hidden;`;
       document.body.appendChild(clone);
-    }, { passive: false });
+    }, { passive: false, signal: sig });
 
     list.addEventListener('touchmove', e => {
       if (!dragging) return;
@@ -2862,7 +2867,7 @@
         if (touch.clientY < r.top + r.height / 2) list.insertBefore(placeholder, item);
         else list.insertBefore(placeholder, item.nextSibling);
       }
-    }, { passive: false });
+    }, { passive: false, signal: sig });
 
     list.addEventListener('touchend', () => {
       if (!dragging) return;
@@ -2870,7 +2875,6 @@
       dragging.style.opacity = '';
       placeholder.remove();
       clone.remove();
-      // Persist new order
       const newIds = Array.from(list.querySelectorAll('.cp-task-swipe-wrap[data-task-id]')).map(el => el.dataset.taskId);
       const newSet = new Set(newIds);
       let insertIdx = DB_TASKS.findIndex(t => newSet.has(t.id));
@@ -2881,42 +2885,42 @@
       DB_TASKS = others;
       save();
       dragging = null; clone = null; placeholder = null;
-    }, { passive: false });
+    }, { passive: false, signal: sig });
   }
 
   var _taskOpenRow = null;
   function initTaskSwipe() {
     _taskOpenRow = null;
     const ACTIONS_WIDTH = 112;
-    document.querySelectorAll('#taskList .cp-task-item').forEach(row => {
+    document.querySelectorAll('#taskList .cp-task-swipe-inner').forEach(inner => {
       let startX = 0, active = false;
-      row.addEventListener('touchstart', e => {
+      inner.addEventListener('touchstart', e => {
         if (e.target.closest('.cp-task-drag') || e.target.closest('.cp-checkbox')) return;
         startX = e.touches[0].clientX;
         active = true;
-        row.style.transition = 'none';
+        inner.style.transition = 'none';
       }, { passive: true });
-      row.addEventListener('touchmove', e => {
+      inner.addEventListener('touchmove', e => {
         if (!active) return;
         const dx = e.touches[0].clientX - startX;
-        const base = (_taskOpenRow === row) ? -ACTIONS_WIDTH : 0;
-        row.style.transform = `translateX(${Math.min(0, Math.max(-ACTIONS_WIDTH, base + dx))}px)`;
+        const base = (_taskOpenRow === inner) ? -ACTIONS_WIDTH : 0;
+        inner.style.transform = `translateX(${Math.min(0, Math.max(-ACTIONS_WIDTH, base + dx))}px)`;
       }, { passive: true });
-      row.addEventListener('touchend', e => {
+      inner.addEventListener('touchend', e => {
         if (!active) return;
         active = false;
         const dx = e.changedTouches[0].clientX - startX;
-        const wasOpen = _taskOpenRow === row;
-        row.style.transition = 'transform 0.25s ease';
+        const wasOpen = _taskOpenRow === inner;
+        inner.style.transition = 'transform 0.25s ease';
         if (!wasOpen && dx < -30) {
           if (_taskOpenRow) _taskOpenRow.style.transform = 'translateX(0)';
-          row.style.transform = `translateX(-${ACTIONS_WIDTH}px)`;
-          _taskOpenRow = row;
+          inner.style.transform = `translateX(-${ACTIONS_WIDTH}px)`;
+          _taskOpenRow = inner;
         } else if (wasOpen && dx > 20) {
-          row.style.transform = 'translateX(0)';
+          inner.style.transform = 'translateX(0)';
           _taskOpenRow = null;
         } else {
-          row.style.transform = wasOpen ? `translateX(-${ACTIONS_WIDTH}px)` : 'translateX(0)';
+          inner.style.transform = wasOpen ? `translateX(-${ACTIONS_WIDTH}px)` : 'translateX(0)';
         }
       }, { passive: true });
     });
