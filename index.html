@@ -1970,7 +1970,11 @@
 
   function goToSlide(index) {
     _tideIdx = index;
-    document.querySelectorAll('.tide-slide').forEach((s, i) => s.classList.toggle('active', i === index));
+    document.querySelectorAll('.tide-slide').forEach((s, i) => {
+      s.classList.toggle('active', i === index);
+      const inner = s.querySelector('.tide-slide-inner');
+      if (inner) inner.scrollTop = 0;
+    });
     document.querySelectorAll('.tide-dot').forEach((d, i) => d.classList.toggle('active', i === index));
   }
 
