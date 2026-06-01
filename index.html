@@ -4295,7 +4295,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     _forceInputClear(document.getElementById('ec-genmoji-input'));
     switchEcTab('emoji');
     renderEcIconGrid();
-    updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
+    updateEcIconPreview(null);
   }
 
   function openEditCurrent() {
@@ -4413,7 +4413,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     ecLogoDataUrl = null;
     document.getElementById('ecLogoUpload').value = '';
     document.getElementById('ecClearLogoBtn').style.display = 'none';
-    updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
+    updateEcIconPreview(null);
   }
 
   function saveEditCurrent() {
