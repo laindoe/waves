@@ -780,6 +780,13 @@
 
   .cp-task-drag {
     color: #C0CDD5; cursor: grab; flex-shrink: 0; padding: 4px;
+    touch-action: none;
+  }
+
+  .cp-task-placeholder {
+    border: 1.5px dashed rgba(62,198,216,0.4);
+    background: rgba(62,198,216,0.05);
+    border-radius: 8px;
   }
 
   /* Completed toggle */
@@ -1711,6 +1718,24 @@
   </div>
 </div>
 
+<!-- ADD TASK MODAL -->
+<div class="modal-overlay" id="addTaskModal" onclick="if(event.target===this)closeAddTaskModal()">
+  <div class="modal-card">
+    <div class="modal-title">Add Task</div>
+    <input id="addTaskNameInput" type="text" class="modal-input" placeholder="Task name..." maxlength="200"/>
+    <div style="margin-top:14px;">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;color:#8A9BAA;margin-bottom:8px;">PLACE BEFORE</div>
+      <select id="addTaskPositionSelect" style="width:100%;padding:10px 12px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:white;appearance:none;-webkit-appearance:none;">
+        <option value="end">End of list</option>
+      </select>
+    </div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="modal-btn-secondary" onclick="closeAddTaskModal()">Cancel</button>
+      <button class="modal-btn-primary" onclick="confirmAddTask()">Add Task</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD CURRENT MODAL -->
 <div class="modal-overlay" id="addCurrentModal" onclick="closeAddCurrentModal(event)">
   <div class="modal-card">
@@ -2593,15 +2618,16 @@
     const display = currentFilter === 'next5' ? incomplete.slice(0, 3) : incomplete;
 
     list.innerHTML = display.map(t => `
-      <div class="cp-task-item" id="task-${t.id}">
+      <div class="cp-task-item" id="task-${t.id}" data-task-id="${t.id}">
         <div class="cp-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask('${t.id}')">
           ${t.done ? '<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
         </div>
-        <span class="cp-task-name ${t.done ? 'done' : ''}">${t.name}</span>
+        <span class="cp-task-name ${t.done ? 'done' : ''}" ondblclick="editTaskInline('${t.id}', this)">${t.name}</span>
         <svg class="cp-task-drag" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
         <svg onclick="deleteTask('${t.id}')" style="cursor:pointer;flex-shrink:0;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
       </div>
     `).join('');
+    initTaskDragDrop();
 
     document.getElementById('completedLabel').textContent = `View Completed (${completed.length})`;
     completedList.innerHTML = completed.map(t => `
@@ -2697,41 +2723,131 @@
   }
 
   function addMicrotask() {
-    const list = document.getElementById('taskList');
-    if (!list) return;
-    const existing = document.getElementById('addTaskInputRow');
-    if (existing) { existing.remove(); return; }
-    const row = document.createElement('div');
-    row.className = 'cp-task-item';
-    row.id = 'addTaskInputRow';
-    row.innerHTML = `
-      <input id="addTaskInput" type="text" placeholder="Enter task name..."
-        style="flex:1;border:none;border-bottom:1.5px solid #3EC6D8;outline:none;font-size:14px;color:#1E3A5F;font-family:'DM Sans',sans-serif;padding:4px 0;background:none;"/>
-      <button onclick="confirmAddMicrotask()" style="background:#1E3A5F;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-left:8px;">Add</button>
-    `;
-    list.appendChild(row);
-    const input = document.getElementById('addTaskInput');
+    if (!currentPageCurrentId) return;
+    const nameInput = document.getElementById('addTaskNameInput');
+    if (nameInput) nameInput.value = '';
+    // Populate position picker
+    const sel = document.getElementById('addTaskPositionSelect');
+    if (sel) {
+      const tasks = getTasksForCurrent(currentPageCurrentId).filter(t => !t.done);
+      sel.innerHTML = '<option value="end">End of list</option>' +
+        tasks.map(t => `<option value="${t.id}">Before: ${t.name}</option>`).join('');
+    }
+    document.getElementById('addTaskModal').classList.add('open');
+    setTimeout(() => nameInput && nameInput.focus(), 100);
+  }
+
+  function closeAddTaskModal() {
+    document.getElementById('addTaskModal').classList.remove('open');
+  }
+
+  function confirmAddTask() {
+    const nameInput = document.getElementById('addTaskNameInput');
+    const sel = document.getElementById('addTaskPositionSelect');
+    if (!nameInput || !currentPageCurrentId) return;
+    const val = nameInput.value.trim();
+    if (!val) { nameInput.focus(); return; }
+    const newTask = { id: 't' + Date.now(), currentId: currentPageCurrentId, name: val, done: false };
+    const beforeId = sel ? sel.value : 'end';
+    if (beforeId === 'end') {
+      DB_TASKS.push(newTask);
+    } else {
+      const idx = DB_TASKS.findIndex(t => t.id === beforeId);
+      if (idx >= 0) DB_TASKS.splice(idx, 0, newTask);
+      else DB_TASKS.push(newTask);
+    }
+    save();
+    currentFilter = 'all';
+    document.getElementById('toggleAll').classList.add('active');
+    document.getElementById('toggleNext5').classList.remove('active');
+    closeAddTaskModal();
+    renderTasks();
+  }
+
+  function editTaskInline(id, el) {
+    if (el.querySelector('input')) return;
+    const task = DB_TASKS.find(t => t.id === id);
+    if (!task) return;
+    const original = task.name;
+    const input = document.createElement('input');
+    input.value = original;
+    input.style.cssText = 'flex:1;border:none;border-bottom:1.5px solid #3EC6D8;outline:none;font-size:14px;color:#1E3A5F;font-family:\'DM Sans\',sans-serif;padding:2px 0;background:none;width:100%;';
+    el.textContent = '';
+    el.appendChild(input);
     input.focus();
+    input.select();
+    const save_ = () => {
+      const v = input.value.trim();
+      task.name = v || original;
+      save();
+      renderTasks();
+    };
+    input.addEventListener('blur', save_);
     input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') confirmAddMicrotask();
-      if (e.key === 'Escape') row.remove();
+      if (e.key === 'Enter') { input.blur(); }
+      if (e.key === 'Escape') { task.name = original; renderTasks(); }
     });
   }
 
-  function confirmAddMicrotask() {
-    const input = document.getElementById('addTaskInput');
-    if (!input || !currentPageCurrentId) return;
-    const val = input.value.trim();
-    if (val) {
-      DB_TASKS.push({ id: 't' + Date.now(), currentId: currentPageCurrentId, name: val, done: false });
+  function initTaskDragDrop() {
+    const list = document.getElementById('taskList');
+    if (!list) return;
+    let dragging = null, clone = null, placeholder = null, cloneOffsetY = 0;
+
+    list.addEventListener('touchstart', e => {
+      const handle = e.target.closest('.cp-task-drag');
+      if (!handle) return;
+      e.preventDefault();
+      dragging = handle.closest('.cp-task-item');
+      if (!dragging) return;
+      const touch = e.touches[0];
+      const rect = dragging.getBoundingClientRect();
+      cloneOffsetY = touch.clientY - rect.top;
+      placeholder = document.createElement('div');
+      placeholder.className = 'cp-task-placeholder';
+      placeholder.style.height = rect.height + 'px';
+      list.insertBefore(placeholder, dragging);
+      dragging.style.opacity = '0';
+      clone = dragging.cloneNode(true);
+      clone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;opacity:0.96;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,0.12);background:white;border-radius:8px;`;
+      document.body.appendChild(clone);
+    }, { passive: false });
+
+    list.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      clone.style.top = (touch.clientY - cloneOffsetY) + 'px';
+      clone.style.display = 'none';
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      clone.style.display = '';
+      if (!el) return;
+      const item = el.closest('.cp-task-item');
+      if (item && item !== dragging && item.closest('#taskList') === list) {
+        const r = item.getBoundingClientRect();
+        if (touch.clientY < r.top + r.height / 2) list.insertBefore(placeholder, item);
+        else list.insertBefore(placeholder, item.nextSibling);
+      }
+    }, { passive: false });
+
+    list.addEventListener('touchend', () => {
+      if (!dragging) return;
+      list.insertBefore(dragging, placeholder);
+      dragging.style.opacity = '';
+      placeholder.remove();
+      clone.remove();
+      // Persist new order
+      const newIds = Array.from(list.querySelectorAll('.cp-task-item[data-task-id]')).map(el => el.dataset.taskId);
+      const newSet = new Set(newIds);
+      let insertIdx = DB_TASKS.findIndex(t => newSet.has(t.id));
+      if (insertIdx < 0) insertIdx = 0;
+      const others = DB_TASKS.filter(t => !newSet.has(t.id));
+      const reordered = newIds.map(id => DB_TASKS.find(t => t.id === id)).filter(Boolean);
+      others.splice(insertIdx, 0, ...reordered);
+      DB_TASKS = others;
       save();
-      currentFilter = 'all';
-      document.getElementById('toggleAll').classList.add('active');
-      document.getElementById('toggleNext5').classList.remove('active');
-      renderTasks();
-    } else {
-      document.getElementById('addTaskInputRow')?.remove();
-    }
+      dragging = null; clone = null; placeholder = null;
+    }, { passive: false });
   }
 
   function openCurrent(waveName, currentName) {
