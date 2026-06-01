@@ -2134,10 +2134,11 @@
 
   // ── RENDER: TODAY PAGE ──
   function renderTodayPage() {
-    const totalDone = DB_TASKS.filter(t => t.done).length;
+    const { start, end } = getWeekBounds();
+    const weekDone = DB_TASKS.filter(t => t.done && t.completedAt >= start && t.completedAt <= end).length;
     const mDone = document.getElementById('m-tasks-done');
     const mStreak = document.getElementById('m-streak');
-    if (mDone) mDone.textContent = totalDone;
+    if (mDone) mDone.textContent = weekDone;
     if (mStreak) mStreak.textContent = calcStreak();
 
     // Render wave cards dynamically
@@ -2550,6 +2551,19 @@
     return new Date().toISOString().slice(0, 10);
   }
 
+  function getWeekBounds() {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - now.getDay()); // back to Sunday
+    const saturday = new Date(sunday);
+    saturday.setDate(sunday.getDate() + 6);
+    return {
+      start: sunday.toISOString().slice(0, 10),
+      end: saturday.toISOString().slice(0, 10)
+    };
+  }
+
   function recordActivity() {
     const key = 'waves_activity';
     const activity = JSON.parse(localStorage.getItem(key) || '{}');
@@ -2581,7 +2595,8 @@
     const task = DB_TASKS.find(t => t.id === id);
     if (task) {
       task.done = !task.done;
-      if (task.done) recordActivity();
+      if (task.done) { task.completedAt = todayStr(); recordActivity(); }
+      else { task.completedAt = null; }
       save();
       renderTasks();
       renderWavesAccordion();
