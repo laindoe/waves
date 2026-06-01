@@ -74,7 +74,7 @@
 
   /* ── CONTENT ── */
   .content {
-    padding: 0 18px 24px;
+    padding: 0 18px 4px;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -400,7 +400,7 @@
 
   .ocean-banner { width: 100%; overflow: hidden; border-bottom: 1px solid rgba(30,58,95,0.08); }
 
-  .waves-content { padding: 20px 20px 24px; }
+  .waves-content { padding: 20px 20px 4px; }
 
   .aw-heading { font-size: 16px; font-weight: 700; color: #1E3A5F; letter-spacing: 0.04em; margin-bottom: 4px; }
   .aw-sub { font-size: 12px; color: #8A9BAA; margin-bottom: 18px; }
@@ -610,7 +610,7 @@
   }
 
   /* CURRENTS */
-  .wd-content { padding: 20px 20px 24px; }
+  .wd-content { padding: 20px 20px 4px; }
   .wd-wave-name-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
   .wd-wave-label { font-size:20px; font-weight:700; color:#1E3A5F; }
 
@@ -648,7 +648,7 @@
   /* ── CURRENT PAGE ── */
   .cp-menu { font-size:18px; color:#8A9BAA; letter-spacing:0.1em; cursor:pointer; }
 
-  .cp-content { padding: 0 20px 24px; }
+  .cp-content { padding: 0 20px 4px; }
 
   .cp-identity {
     display: flex; align-items: center; gap: 14px;
@@ -1140,7 +1140,7 @@
     font-size: 14px; font-weight: 600;
     cursor: pointer; font-family: "DM Sans", sans-serif;
   }
-  .settings-content { padding: 0 20px 24px; }
+  .settings-content { padding: 0 20px 4px; }
 
   .settings-page-title {
     font-size: 20px; font-weight: 400;
@@ -2504,63 +2504,58 @@
     });
   }
 
+  // Single delegated swipe handler — re-attached on each render via oceanSwipeInit flag
+  var _oceanSwipeListening = false;
   function initOceanSwipe() {
-    let openWrap = null;
-    const SWIPE_THRESHOLD = 40;
     const DELETE_WIDTH = 72;
+    let openRow = null;
+    let touch = null; // { row, startX, startY, dir }
 
-    function closeOpen(except) {
-      if (openWrap && openWrap !== except) {
-        openWrap.querySelector('.ocean-current-row').style.transform = 'translateX(0)';
-        openWrap = null;
-      }
-    }
-
-    document.querySelectorAll('.ocean-swipe-wrap').forEach(wrap => {
-      const row = wrap.querySelector('.ocean-current-row');
-      let startX = 0, startY = 0, tracking = false, isOpen = false;
-
-      row.addEventListener('touchstart', e => {
-        if (e.target.closest('.drag-handle') || e.target.closest('.ocean-activate-btn')) return;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        tracking = true;
-        row.style.transition = 'none';
-      }, { passive: true });
-
-      row.addEventListener('touchmove', e => {
-        if (!tracking) return;
-        const dx = e.touches[0].clientX - startX;
-        const dy = e.touches[0].clientY - startY;
-        if (Math.abs(dy) > Math.abs(dx) + 5) { tracking = false; return; }
-        e.preventDefault();
-        const base = isOpen ? -DELETE_WIDTH : 0;
-        const next = Math.min(0, Math.max(-DELETE_WIDTH, base + dx));
-        row.style.transform = `translateX(${next}px)`;
-      }, { passive: false });
-
-      row.addEventListener('touchend', e => {
-        if (!tracking) return;
-        tracking = false;
-        const dx = e.changedTouches[0].clientX - startX;
-        row.style.transition = 'transform 0.25s ease';
-        if (!isOpen && dx < -SWIPE_THRESHOLD) {
-          row.style.transform = `translateX(-${DELETE_WIDTH}px)`;
-          closeOpen(wrap);
-          openWrap = wrap;
-          isOpen = true;
-        } else if (isOpen && dx > SWIPE_THRESHOLD) {
-          row.style.transform = 'translateX(0)';
-          openWrap = null;
-          isOpen = false;
-        } else {
-          row.style.transform = isOpen ? `translateX(-${DELETE_WIDTH}px)` : 'translateX(0)';
-        }
-      }, { passive: true });
-    });
+    if (_oceanSwipeListening) return;
+    _oceanSwipeListening = true;
 
     document.addEventListener('touchstart', e => {
-      if (openWrap && !openWrap.contains(e.target)) closeOpen(null);
+      const row = e.target.closest('.ocean-current-row');
+      if (!row) {
+        // tap outside — close open row
+        if (openRow) { openRow.style.transition = 'transform 0.25s ease'; openRow.style.transform = 'translateX(0)'; openRow = null; }
+        return;
+      }
+      if (e.target.closest('.drag-handle') || e.target.closest('.ocean-activate-btn')) return;
+      touch = { row, startX: e.touches[0].clientX, startY: e.touches[0].clientY, dir: null, wasOpen: openRow === row };
+      row.style.transition = 'none';
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+      if (!touch) return;
+      const dx = e.touches[0].clientX - touch.startX;
+      const dy = e.touches[0].clientY - touch.startY;
+      if (touch.dir === null) {
+        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+        touch.dir = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v';
+      }
+      if (touch.dir !== 'h') return;
+      e.preventDefault();
+      const base = touch.wasOpen ? -DELETE_WIDTH : 0;
+      touch.row.style.transform = `translateX(${Math.min(0, Math.max(-DELETE_WIDTH, base + dx))}px)`;
+    }, { passive: false });
+
+    document.addEventListener('touchend', e => {
+      if (!touch || touch.dir !== 'h') { touch = null; return; }
+      const dx = e.changedTouches[0].clientX - touch.startX;
+      const { row, wasOpen } = touch;
+      row.style.transition = 'transform 0.25s ease';
+      if (!wasOpen && dx < -30) {
+        if (openRow && openRow !== row) { openRow.style.transition = 'transform 0.25s ease'; openRow.style.transform = 'translateX(0)'; }
+        row.style.transform = `translateX(-${DELETE_WIDTH}px)`;
+        openRow = row;
+      } else if (wasOpen && dx > 20) {
+        row.style.transform = 'translateX(0)';
+        openRow = null;
+      } else {
+        row.style.transform = wasOpen ? `translateX(-${DELETE_WIDTH}px)` : 'translateX(0)';
+      }
+      touch = null;
     }, { passive: true });
   }
 
