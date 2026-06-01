@@ -4181,12 +4181,18 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       </div>
     </div>
     <div style="border-radius:12px;overflow:hidden;background:rgba(30,58,95,0.04);margin-bottom:8px;">
-      <div id="ecTabEmoji" style="padding:12px;display:flex;gap:10px;">
-        <input id="ec-emoji-input" type="text" maxlength="4" oninput="onEcEmojiInput(this)"
-          style="flex:1;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
-        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
-          <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;text-align:center;">GENMOJI</div>
-          <div id="ecPasteZone" contenteditable="true" onpaste="handleEcPasteEvent(event)" style="flex:1;min-height:40px;border:1.5px dashed rgba(62,198,216,0.35);border-radius:10px;outline:none;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.5);-webkit-user-select:text;user-select:text;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+      <div id="ecTabEmoji" style="padding:12px;">
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;">
+            <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:5px;text-align:center;">EMOJI</div>
+            <input id="ec-emoji-input" type="text" maxlength="4" oninput="onEcEmojiInput(this)"
+              style="width:100%;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:5px;text-align:center;">GENMOJI</div>
+            <div id="ecPasteZone" contenteditable="true" onpaste="handleEcPasteEvent(event)" oninput="onEcGenmojiInput(this)"
+              style="width:100%;min-height:46px;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;-webkit-user-select:text;user-select:text;overflow:hidden;display:block;"></div>
+          </div>
         </div>
       </div>
       <button id="ecClearIconBtn" style="display:none;" onclick="clearEcIcon()"></button>
@@ -4256,6 +4262,15 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
 
+  function onEcGenmojiInput(el) {
+    if (el.querySelector('img')) return; // image paste handled by handleEcPasteEvent
+    const text = el.textContent.trim();
+    ecEmoji = text ? [...text].slice(0, 2).join('') : null;
+    ecLogoDataUrl = null; ecIconKey = null;
+    document.getElementById('ecClearLogoBtn').style.display = 'none';
+    updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
+  }
+
   function selectEcEmoji(emoji) {
     ecEmoji = emoji; ecIconKey = null; ecLogoDataUrl = null;
     const inp = document.getElementById('ec-emoji-input');
@@ -4282,6 +4297,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     document.getElementById('ecClearIconBtn').style.display = 'none';
     const inp = document.getElementById('ec-emoji-input');
     if (inp) inp.value = '';
+    const pz = document.getElementById('ecPasteZone');
+    if (pz) pz.innerHTML = '';
     renderEcIconGrid();
     updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
