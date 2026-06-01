@@ -4166,28 +4166,22 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     </button>
     <div class="modal-title">EDIT CURRENT</div>
 
-    <!-- Icon / Image -->
+    <!-- Icon -->
     <div class="modal-field-label">ICON</div>
-    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
       <div id="ec-icon-preview" style="width:64px;height:64px;border-radius:16px;border:1.5px solid rgba(30,58,95,0.12);background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
       <div style="flex:1;">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-          <label for="ecLogoUpload" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#1E3A5F;color:white;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Image
+        <input id="ec-emoji" type="text" maxlength="4" placeholder="Paste emoji…" oninput="onEcEmojiInput(this)"
+          style="width:100%;padding:10px 12px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;margin-bottom:6px;"/>
+        <div style="font-size:11px;color:#8A9BAA;">Type or paste an emoji, or leave blank to use the category icon.</div>
+        <div style="display:flex;gap:12px;margin-top:6px;">
+          <label for="ecLogoUpload" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#3EC6D8;cursor:pointer;font-family:'DM Sans',sans-serif;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3EC6D8" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Upload image instead
           </label>
-          <button onclick="toggleEcEmojiPicker()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(30,58,95,0.08);border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:#1E3A5F;font-family:'DM Sans',sans-serif;">😀 Emoji</button>
+          <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
         </div>
         <input type="file" id="ecLogoUpload" accept="image/*" style="display:none;" onchange="handleEcLogoUpload(event)"/>
-        <div style="font-size:11px;color:#8A9BAA;">Or uses category default</div>
-        <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
-        <button id="ecClearEmojiBtn" onclick="clearEcEmoji()" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove emoji</button>
-      </div>
-    </div>
-    <!-- Emoji picker -->
-    <div id="ecEmojiPicker" style="display:none;background:rgba(30,58,95,0.05);border-radius:14px;padding:10px;margin-bottom:16px;">
-      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;">
-        ${['🎯','📝','✅','📌','💡','🧠','📊','💼','🎨','✏️','🖌️','📸','🎬','🎵','🎸','🎤','💪','🏃','🧘','🏋️','🌿','💊','🛌','❤️','🏠','🌱','🍳','☕','🥗','🍕','🛒','🧹','💰','💳','📦','🗂️','📚','🔬','🖥️','⚙️','🌊','🌸','🌙','☀️','🌈','🔥','⭐','🎉','🚀','✈️','🚗','🎁','🏆','🦋','🌺','🐉','👥','💬','📱','✉️','🔑','🛡️','🧩','🎭'].map(e => `<button onclick="selectEcEmoji('${e}')" style="background:none;border:none;cursor:pointer;font-size:22px;line-height:1;padding:6px;border-radius:8px;transition:background 0.15s;" onmouseenter="this.style.background='rgba(62,198,216,0.15)'" onmouseleave="this.style.background='none'">${e}</button>`).join('')}
       </div>
     </div>
 
@@ -4220,11 +4214,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     document.getElementById('ec-category').value = current.category || '';
     ecLogoDataUrl = current.logo || null;
     ecEmoji = current.emoji || null;
+    document.getElementById('ec-emoji').value = ecEmoji || '';
     updateEcIconPreview(current);
-
     document.getElementById('ecClearLogoBtn').style.display = ecLogoDataUrl ? 'inline' : 'none';
-    document.getElementById('ecClearEmojiBtn').style.display = ecEmoji ? 'inline' : 'none';
-    document.getElementById('ecEmojiPicker').style.display = 'none';
 
     document.getElementById('editCurrentModal').classList.add('open');
   }
@@ -4247,26 +4239,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     }
   }
 
-  function toggleEcEmojiPicker() {
-    const p = document.getElementById('ecEmojiPicker');
-    if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function selectEcEmoji(emoji) {
-    ecEmoji = emoji;
-    ecLogoDataUrl = null;
-    document.getElementById('ecLogoUpload').value = '';
-    document.getElementById('ecClearLogoBtn').style.display = 'none';
-    document.getElementById('ecClearEmojiBtn').style.display = 'inline';
-    document.getElementById('ecEmojiPicker').style.display = 'none';
-    updateEcIconPreview(null);
-  }
-
-  function clearEcEmoji() {
-    ecEmoji = null;
-    document.getElementById('ecClearEmojiBtn').style.display = 'none';
-    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
-    updateEcIconPreview(current);
+  function onEcEmojiInput(input) {
+    // Keep only the first grapheme cluster (one emoji)
+    const v = [...input.value].slice(0, 2).join('');
+    input.value = v;
+    ecEmoji = v || null;
+    if (ecEmoji) { ecLogoDataUrl = null; document.getElementById('ecClearLogoBtn').style.display = 'none'; }
+    updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
 
   function handleEcLogoUpload(event) {
@@ -4276,8 +4255,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     reader.onload = (e) => {
       ecLogoDataUrl = e.target.result;
       ecEmoji = null;
+      document.getElementById('ec-emoji').value = '';
       document.getElementById('ecClearLogoBtn').style.display = 'inline';
-      document.getElementById('ecClearEmojiBtn').style.display = 'none';
       updateEcIconPreview(null);
     };
     reader.readAsDataURL(file);
