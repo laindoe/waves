@@ -2435,7 +2435,7 @@
         </div>
       </div>
     `).join('') || '<div style="padding:20px;text-align:center;color:#8A9BAA;font-size:13px;">No currents in backlog.</div>';
-    container.insertAdjacentHTML('beforeend', '<div style="height:80px;flex-shrink:0;"></div>');
+    container.insertAdjacentHTML('beforeend', '<div style="height:calc(80px + env(safe-area-inset-bottom));flex-shrink:0;"></div>');
     initOceanDragDrop();
   }
 
