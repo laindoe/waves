@@ -3116,6 +3116,28 @@
     }
   };
 
+  function getMoonSign() {
+    const J2000 = new Date("2000-01-01T12:00:00Z");
+    const d = (new Date() - J2000) / 86400000;
+    const r = Math.PI / 180;
+    const L  = (218.316 + 13.176396  * d) % 360;
+    const M  = ((134.963 + 13.064993  * d) % 360) * r;
+    const D  = ((297.850 + 12.190749  * d) % 360) * r;
+    const F  = ((93.272  + 13.229350  * d) % 360) * r;
+    const Ms = ((357.529 + 0.985608   * d) % 360) * r;
+    const lon = ((L
+      + 6.289 * Math.sin(M)
+      - 1.274 * Math.sin(2 * D - M)
+      + 0.658 * Math.sin(2 * D)
+      - 0.213 * Math.sin(2 * M)
+      - 0.186 * Math.sin(Ms)
+      - 0.114 * Math.sin(2 * F)
+    ) % 360 + 360) % 360;
+    const signs = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                   'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    return signs[Math.floor(lon / 30)];
+  }
+
   function getMoonPhase() {
     const knownNewMoon = new Date("2000-01-06T18:14:00Z");
     const lunarCycle = 29.53058867;
@@ -3146,7 +3168,7 @@
     const keywords = document.getElementById("ts2-keywords");
     if (icon) icon.textContent = data.icon;
     if (name) name.textContent = phase.toUpperCase();
-    if (illum) illum.textContent = illumination + "% illuminated";
+    if (illum) illum.textContent = illumination + "% illuminated · " + getMoonSign();
     if (body) body.textContent = data.body;
     if (keywords) {
       keywords.innerHTML = data.keywords.map(k => `
