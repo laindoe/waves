@@ -2505,51 +2505,46 @@
     });
   }
 
-  var _oceanSwipeListening = false;
   var _oceanOpenRow = null;
   function initOceanSwipe() {
-    _oceanOpenRow = null; // reset on each render
-    if (_oceanSwipeListening) return;
-    _oceanSwipeListening = true;
-
+    _oceanOpenRow = null;
     const DELETE_WIDTH = 72;
-    let swipe = null; // { row, startX, wasOpen }
 
-    document.addEventListener('touchstart', e => {
-      const row = e.target.closest('.ocean-current-row');
-      if (!row) {
-        if (_oceanOpenRow) { _oceanOpenRow.style.transform = 'translateX(0)'; _oceanOpenRow = null; }
-        return;
-      }
-      if (e.target.closest('.drag-handle') || e.target.closest('.ocean-activate-btn')) return;
-      swipe = { row, startX: e.touches[0].clientX, wasOpen: _oceanOpenRow === row };
-      row.style.transition = 'none';
-    }, { passive: true });
+    document.querySelectorAll('.ocean-current-row').forEach(row => {
+      let startX = 0, active = false;
 
-    document.addEventListener('touchmove', e => {
-      if (!swipe) return;
-      const dx = e.touches[0].clientX - swipe.startX;
-      const base = swipe.wasOpen ? -DELETE_WIDTH : 0;
-      swipe.row.style.transform = `translateX(${Math.min(0, Math.max(-DELETE_WIDTH, base + dx))}px)`;
-    }, { passive: true });
+      row.addEventListener('touchstart', e => {
+        if (e.target.closest('.drag-handle') || e.target.closest('.ocean-activate-btn')) return;
+        startX = e.touches[0].clientX;
+        active = true;
+        row.style.transition = 'none';
+      }, { passive: true });
 
-    document.addEventListener('touchend', e => {
-      if (!swipe) return;
-      const dx = e.changedTouches[0].clientX - swipe.startX;
-      const { row, wasOpen } = swipe;
-      swipe = null;
-      row.style.transition = 'transform 0.25s ease';
-      if (!wasOpen && dx < -30) {
-        if (_oceanOpenRow && _oceanOpenRow !== row) _oceanOpenRow.style.transform = 'translateX(0)';
-        row.style.transform = `translateX(-${DELETE_WIDTH}px)`;
-        _oceanOpenRow = row;
-      } else if (wasOpen && dx > 20) {
-        row.style.transform = 'translateX(0)';
-        _oceanOpenRow = null;
-      } else {
-        row.style.transform = wasOpen ? `translateX(-${DELETE_WIDTH}px)` : 'translateX(0)';
-      }
-    }, { passive: true });
+      row.addEventListener('touchmove', e => {
+        if (!active) return;
+        const dx = e.touches[0].clientX - startX;
+        const base = (_oceanOpenRow === row) ? -DELETE_WIDTH : 0;
+        row.style.transform = `translateX(${Math.min(0, Math.max(-DELETE_WIDTH, base + dx))}px)`;
+      }, { passive: true });
+
+      row.addEventListener('touchend', e => {
+        if (!active) return;
+        active = false;
+        const dx = e.changedTouches[0].clientX - startX;
+        const wasOpen = _oceanOpenRow === row;
+        row.style.transition = 'transform 0.25s ease';
+        if (!wasOpen && dx < -30) {
+          if (_oceanOpenRow) _oceanOpenRow.style.transform = 'translateX(0)';
+          row.style.transform = `translateX(-${DELETE_WIDTH}px)`;
+          _oceanOpenRow = row;
+        } else if (wasOpen && dx > 20) {
+          row.style.transform = 'translateX(0)';
+          _oceanOpenRow = null;
+        } else {
+          row.style.transform = wasOpen ? `translateX(-${DELETE_WIDTH}px)` : 'translateX(0)';
+        }
+      }, { passive: true });
+    });
   }
 
   function populateCurrentCategories() {
