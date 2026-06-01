@@ -794,19 +794,8 @@
 
 
   /* ── OCEAN PAGE ── */
-  #page-ocean.active {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    overflow: hidden;
-  }
-  #page-ocean .header { flex: 0 0 auto; }
   .ocean-page-content {
     padding: 0 20px;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
   }
   .ocean-page-header { padding: 20px 0 0; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; }
   .ocean-add-inline-btn {
@@ -815,14 +804,7 @@
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; flex-shrink: 0; color: #1E3A5F;
   }
-  #oceanTabContent {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 0;
-    scrollbar-width: none;
-  }
-  #oceanTabContent::-webkit-scrollbar { display: none; }
+  #oceanTabContent { padding-bottom: 24px; }
 
   /* Wave selector */
   .ocean-wave-selector {
@@ -2022,13 +2004,8 @@
     if (id === 'settings' && typeof renderSettingsWaveList === 'function') {
       renderSettingsWaveList();
     }
-    // Lock body scroll on ocean (content scrolls internally); unlock on all other pages
-    if (id === 'ocean') {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-      window.scrollTo(0, 0);
-    }
+    document.body.style.overflow = '';
+    window.scrollTo(0, 0);
     const page = document.getElementById('page-' + id);
     if (page) page.scrollTop = 0;
   }
@@ -2435,7 +2412,6 @@
         </div>
       </div>
     `).join('') || '<div style="padding:20px;text-align:center;color:#8A9BAA;font-size:13px;">No currents in backlog.</div>';
-    container.insertAdjacentHTML('beforeend', '<div style="height:calc(80px + env(safe-area-inset-bottom));flex-shrink:0;"></div>');
     initOceanDragDrop();
   }
 
