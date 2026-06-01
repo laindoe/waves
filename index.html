@@ -797,7 +797,7 @@
   #page-ocean.active {
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - 60px - env(safe-area-inset-bottom));
+    height: 100dvh;
     overflow: hidden;
   }
   #page-ocean .header { flex: 0 0 auto; }
@@ -813,7 +813,7 @@
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 80px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
     scrollbar-width: none;
   }
   #oceanTabContent::-webkit-scrollbar { display: none; }
