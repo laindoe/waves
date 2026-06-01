@@ -4173,7 +4173,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     <!-- Icon picker -->
     <div class="modal-field-label">ICON</div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <div id="ec-icon-preview" style="width:56px;height:56px;border-radius:50%;border:1.5px solid rgba(30,58,95,0.12);background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div id="ec-icon-preview" style="width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(30,58,95,0.12);background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
       <div style="flex:1;display:flex;gap:4px;">
         <button id="ec-tab-btn-emoji"  onclick="switchEcTab('emoji')"  style="flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;background:#1E3A5F;color:white;">Emoji</button>
         <button id="ec-tab-btn-icons"  onclick="switchEcTab('icons')"  style="flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;background:rgba(30,58,95,0.08);color:#5A6A7A;">Icons</button>
@@ -4185,12 +4185,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         <div style="display:flex;gap:10px;">
           <div style="flex:1;">
             <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:5px;text-align:center;">EMOJI</div>
-            <input id="ec-emoji-input" type="text" maxlength="4" oninput="onEcEmojiInput(this)"
+            <input id="ec-emoji-input" type="text" oninput="onEcEmojiInput(this)"
               style="width:100%;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
           </div>
           <div style="flex:1;">
             <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:5px;text-align:center;">GENMOJI</div>
-            <input id="ec-genmoji-input" type="text" maxlength="4" oninput="onEcEmojiInput(this)"
+            <input id="ec-genmoji-input" type="text" oninput="onEcEmojiInput(this)"
               style="width:100%;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
           </div>
         </div>
@@ -4215,7 +4215,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     <!-- Category -->
     <div class="modal-field-label">CATEGORY</div>
-    <input class="modal-input" id="ec-category" type="text" placeholder="e.g. PRODUCTS" style="text-transform:uppercase;margin-bottom:24px;"/>
+    <select class="modal-input" id="ec-category" style="margin-bottom:24px;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A9BAA' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;"></select>
 
     <button class="modal-save-btn" onclick="saveEditCurrent()">SAVE CHANGES</button>
 
@@ -4253,12 +4253,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function onEcEmojiInput(input) {
-    const v = [...input.value].slice(0, 2).join('');
-    input.value = v;
-    ecEmoji = v || null;
+    ecEmoji = [...input.value].slice(0, 2).join('') || null;
     ecIconKey = null; ecLogoDataUrl = null;
     document.getElementById('ecClearLogoBtn').style.display = 'none';
-    
     updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
 
@@ -4300,7 +4297,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     if (!current) return;
 
     document.getElementById('ec-name').value = current.name;
-    document.getElementById('ec-category').value = current.category || '';
+    const wave = DB_WAVES.find(w => w.id === current.waveId);
+    const cats = (wave && wave.categories && wave.categories.length) ? wave.categories : [current.category || 'General'];
+    const catSel = document.getElementById('ec-category');
+    catSel.innerHTML = cats.map(c => `<option value="${c}"${c === current.category ? ' selected' : ''}>${c}</option>`).join('');
+    if (!cats.includes(current.category) && current.category) {
+      catSel.innerHTML += `<option value="${current.category}" selected>${current.category}</option>`;
+    }
     ecLogoDataUrl = current.logo || null;
     ecEmoji = current.emoji || null;
     ecIconKey = current.iconKey || null;
