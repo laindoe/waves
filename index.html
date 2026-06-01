@@ -808,7 +808,13 @@
     flex: 1;
     overflow: hidden;
   }
-  .ocean-page-header { padding: 20px 0 0; flex: 0 0 auto; }
+  .ocean-page-header { padding: 20px 0 0; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; }
+  .ocean-add-inline-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1.5px solid rgba(30,58,95,0.2); background: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; color: #1E3A5F;
+  }
   #oceanTabContent {
     flex: 1;
     overflow-y: auto;
@@ -858,26 +864,6 @@
   .ocean-wave-dot.active { background: #1E3A5F; }
 
   /* Add button */
-  .ocean-add-btn {
-    width: 100%;
-    display: flex; align-items: center; justify-content: center;
-    gap: 10px;
-    padding: 15px;
-    background: none;
-    border: 1.5px solid rgba(30,58,95,0.2);
-    border-radius: 14px;
-    font-size: 13px; font-weight: 600;
-    letter-spacing: 0.12em;
-    color: #1E3A5F;
-    cursor: pointer;
-    font-family: "DM Sans", sans-serif;
-    margin-bottom: 24px;
-    transition: all 0.2s ease;
-  }
-
-  .ocean-add-btn:active {
-    background: rgba(30,58,95,0.05);
-  }
 
   /* Category sections */
   .ocean-category { margin-bottom: 24px; }
@@ -1671,20 +1657,19 @@
   <div class="ocean-page-content">
 
     <div class="ocean-page-header">
-      <div class="aw-heading">OCEAN</div>
-      <div class="aw-sub">All your currents, by wave.</div>
+      <div>
+        <div class="aw-heading">OCEAN</div>
+        <div class="aw-sub">All your currents, by wave.</div>
+      </div>
+      <button class="ocean-add-inline-btn" onclick="addNewCurrent()" title="Add new current">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round">
+          <line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/>
+        </svg>
+      </button>
     </div>
 
     <!-- WAVE SELECTOR -->
     <div class="ocean-wave-selector" id="ocean-tabs-bar"></div>
-
-    <!-- ADD NEW CURRENT -->
-    <button class="ocean-add-btn" onclick="addNewCurrent()" style="flex:0 0 auto;">
-      <svg width="22" height="14" viewBox="0 0 26 14" fill="none">
-        <path d="M1 7 C4 3, 8 3, 13 7 C18 11, 22 11, 25 7" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <span>ADD NEW CURRENT</span>
-    </button>
 
     <!-- BACKLOG CONTENT -->
     <div id="oceanTabContent"></div>
