@@ -1085,99 +1085,6 @@
   .wiz-btn-next { flex:1; padding:14px; border:none; border-radius:12px; background:linear-gradient(180deg, #4E2CC7 0%, #3B1FA6 100%); color:white; font-size:13px; font-weight:600; cursor:pointer; font-family:"DM Sans",sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; letter-spacing:0.06em; }
   .wiz-btn-next:disabled { opacity:0.5; cursor:not-allowed; }
 
-
-  /* ── EBB / FLOW ── */
-  .ebb-flow-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 20px 14px;
-    border-top: 1px solid rgba(30,58,95,0.06);
-    margin-top: 12px;
-  }
-
-  .m-stat + .m-divider + .m-stat + .ebb-flow-row,
-  .momentum-card .ebb-flow-row {
-    grid-column: span 3;
-  }
-
-  .ebb-flow-labels {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
-  }
-
-  .ebb-label { color: #8A9BAA; transition: color 0.3s; }
-  .ebb-label.active { color: #3EC6D8; }
-  .flow-label { color: #8A9BAA; transition: color 0.3s; }
-  .flow-label.active { color: #1E3A5F; }
-  .ebb-flow-sep { color: #C0CDD5; }
-
-  .ebb-toggle {
-    width: 50px; height: 28px; border-radius: 14px;
-    background: #1E3A5F;
-    position: relative; cursor: pointer;
-    transition: background 0.3s ease;
-  }
-
-  .ebb-toggle.ebb { background: #3EC6D8; }
-
-  .ebb-toggle-knob {
-    position: absolute; top: 4px; right: 4px;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: white;
-    transition: transform 0.3s ease;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  }
-
-  .ebb-toggle.ebb .ebb-toggle-knob { transform: translateX(-22px); }
-
-  /* Ebb modal */
-  .ebb-modal-card {
-    background: white; border-radius: 28px;
-    padding: 36px 28px 28px;
-    width: 320px; text-align: center;
-    position: relative;
-  }
-
-  .ebb-modal-wave { margin-bottom: 18px; display: flex; justify-content: center; }
-
-  .ebb-modal-title {
-    font-family: "Cormorant Garamond", serif;
-    font-size: 28px; font-weight: 400;
-    color: #1E3A5F; margin-bottom: 6px;
-  }
-
-  .ebb-modal-sub {
-    font-size: 13px; color: #8A9BAA;
-    margin-bottom: 24px; line-height: 1.5;
-  }
-
-  .ebb-suggestions {
-    display: flex; flex-direction: column; gap: 10px;
-    margin-bottom: 20px; text-align: left;
-  }
-
-  .ebb-suggestion {
-    font-size: 14px; color: #3A5A6A;
-    padding: 10px 14px;
-    background: #F5F8FA;
-    border-radius: 10px;
-    line-height: 1.4;
-  }
-
-  .ebb-modal-note {
-    font-size: 12px; color: #8A9BAA;
-    font-style: italic; margin-bottom: 20px;
-    line-height: 1.5;
-  }
-
-  .ebb-modal-btn {
-    width: 100%; padding: 15px;
-    background: linear-gradient(180deg, #4E2CC7 0%, #3B1FA6 100%);
-    border: none;
-    border-radius: 14px;
-    color: white;
-    font-size: 14px; font-weight: 600;
-    cursor: pointer; font-family: "DM Sans", sans-serif;
-  }
   .settings-content { padding: 0 20px 28px; }
 
   .settings-page-title {
@@ -1696,28 +1603,6 @@
 </div><!-- end page-ocean -->
 
 
-<!-- EBB MODE MODAL -->
-<div class="modal-overlay" id="ebbModal">
-  <div class="ebb-modal-card">
-    <div class="ebb-modal-wave">
-      <svg width="48" height="30" viewBox="0 0 56 30" fill="none">
-        <path d="M2 15 C8 5, 14 5, 20 15 C26 25, 32 25, 38 15 C44 5, 50 5, 54 15" stroke="#3EC6D8" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
-        <path d="M2 22 C8 12, 14 12, 20 22 C26 32, 32 32, 38 22 C44 12, 50 12, 54 22" stroke="#3EC6D8" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.3"/>
-      </svg>
-    </div>
-    <div class="ebb-modal-title">You're in Ebb.</div>
-    <div class="ebb-modal-sub">This is your time to rest and restore.</div>
-    <div class="ebb-suggestions">
-      <div class="ebb-suggestion">🌊 &nbsp;Go for a walk</div>
-      <div class="ebb-suggestion">📚 &nbsp;Read something that feeds you</div>
-      <div class="ebb-suggestion">🎵 &nbsp;Put on music and do nothing</div>
-      <div class="ebb-suggestion">🍃 &nbsp;Step outside and breathe</div>
-      <div class="ebb-suggestion">💤 &nbsp;Rest — the wave will come back</div>
-    </div>
-    <div class="ebb-modal-note">The app will be here when you're ready to flow again.</div>
-    <button class="ebb-modal-btn" onclick="closeEbbModal()">Got it</button>
-  </div>
-</div>
 
 
 <div class="modal-overlay" id="addToWaveModal" onclick="closeAddToWaveModal(event)">
@@ -2082,23 +1967,6 @@
     el.innerHTML = isChecked ? '' : '<svg width="10" height="8" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
-  let inEbb = false;
-
-  function toggleEbb() {
-    inEbb = !inEbb;
-    const toggle = document.getElementById('ebbToggle');
-    const ebbLabel = document.getElementById('ebbLabel');
-    const flowLabel = document.getElementById('flowLabel');
-    toggle.classList.toggle('ebb', inEbb);
-    toggle.classList.toggle('flow', !inEbb);
-    ebbLabel.classList.toggle('active', inEbb);
-    flowLabel.classList.toggle('active', !inEbb);
-    if (inEbb) document.getElementById('ebbModal').classList.add('open');
-  }
-
-  function closeEbbModal() {
-    document.getElementById('ebbModal').classList.remove('open');
-  }
 
   function toggleWave(header) {
     const item = header.closest('.wa-item');
