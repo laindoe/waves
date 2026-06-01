@@ -4190,13 +4190,22 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         <div id="ec-icon-grid" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;"></div>
       </div>
       <div id="ecTabUpload" style="display:none;padding:16px;text-align:center;">
-        <label for="ecLogoUpload" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#1E3A5F;color:white;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Upload Image
-        </label>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <label for="ecLogoUpload" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:#1E3A5F;color:white;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Upload
+          </label>
+          <button onclick="handleEcPaste()" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;background:rgba(62,198,216,0.12);color:#1E3A5F;border:1.5px solid rgba(62,198,216,0.3);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M5 4h-1a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1"/></svg>
+            Paste
+          </button>
+        </div>
         <input type="file" id="ecLogoUpload" accept="image/*" style="display:none;" onchange="handleEcLogoUpload(event)"/>
-        <div style="font-size:11px;color:#8A9BAA;margin-top:8px;">Choose a photo from your library</div>
-        <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;margin-top:6px;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
+        <div id="ecPasteFallback" style="display:none;margin-top:12px;">
+          <div style="font-size:11px;color:#8A9BAA;margin-bottom:6px;">Long-press below and choose Paste</div>
+          <div id="ecPasteZone" contenteditable="true" onpaste="handleEcPasteEvent(event)" style="min-height:44px;border:1.5px dashed rgba(62,198,216,0.4);border-radius:10px;padding:10px 14px;color:#8A9BAA;font-size:12px;outline:none;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.5);">Paste image here</div>
+        </div>
+        <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;margin-top:8px;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
       </div>
     </div>
 
@@ -4238,9 +4247,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     ['emoji','icons','upload'].forEach(t => {
       const panel = document.getElementById('ecTab' + t.charAt(0).toUpperCase() + t.slice(1));
       const btn   = document.getElementById('ec-tab-btn-' + t);
-      if (panel) panel.style.display = t === tab ? (t === 'emoji' || t === 'icons' ? 'block' : 'block') : 'none';
+      if (panel) panel.style.display = t === tab ? 'block' : 'none';
       if (btn) { btn.style.background = t === tab ? '#1E3A5F' : 'rgba(30,58,95,0.08)'; btn.style.color = t === tab ? 'white' : '#5A6A7A'; }
     });
+    if (tab !== 'upload') {
+      const pf = document.getElementById('ecPasteFallback');
+      if (pf) pf.style.display = 'none';
+    }
   }
 
   function onEcEmojiInput(input) {
@@ -4338,6 +4351,53 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       updateEcIconPreview(null);
     };
     reader.readAsDataURL(file);
+  }
+
+  function _applyEcLogoBlob(blob) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      ecLogoDataUrl = e.target.result;
+      ecEmoji = null; ecIconKey = null;
+      document.getElementById('ecClearLogoBtn').style.display = 'inline';
+      document.getElementById('ecClearIconBtn').style.display = 'none';
+      const pf = document.getElementById('ecPasteFallback');
+      if (pf) pf.style.display = 'none';
+      updateEcIconPreview(null);
+    };
+    reader.readAsDataURL(blob);
+  }
+
+  async function handleEcPaste() {
+    try {
+      if (!navigator.clipboard?.read) throw new Error('not supported');
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const imageType = item.types.find(t => t.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          _applyEcLogoBlob(blob);
+          return;
+        }
+      }
+      // clipboard has no image — show fallback
+      const pf = document.getElementById('ecPasteFallback');
+      if (pf) { pf.style.display = 'block'; document.getElementById('ecPasteZone').focus(); }
+    } catch(err) {
+      const pf = document.getElementById('ecPasteFallback');
+      if (pf) { pf.style.display = 'block'; document.getElementById('ecPasteZone').focus(); }
+    }
+  }
+
+  function handleEcPasteEvent(event) {
+    const items = (event.clipboardData || event.originalEvent?.clipboardData)?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        event.preventDefault();
+        _applyEcLogoBlob(item.getAsFile());
+        return;
+      }
+    }
   }
 
   function clearEcLogo() {
