@@ -3073,8 +3073,9 @@
   }
   // ── CATEGORY ICONS ──
   function getCurrentIcon(current, size) {
-    if (current.emoji) return `<span style="font-size:${size}px;line-height:1;display:flex;align-items:center;justify-content:center;">${current.emoji}</span>`;
-    if (current.logo) return `<img src="${current.logo}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:4px;"/>`;
+    if (current.emoji)   return `<span style="font-size:${size}px;line-height:1;display:flex;align-items:center;justify-content:center;">${current.emoji}</span>`;
+    if (current.logo)    return `<img src="${current.logo}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:4px;"/>`;
+    if (current.iconKey) return getCategoryIcon(current.iconKey, size);
     return getCategoryIcon(current.category, size);
   }
 
@@ -4166,24 +4167,34 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     </button>
     <div class="modal-title">EDIT CURRENT</div>
 
-    <!-- Icon -->
+    <!-- Icon picker -->
     <div class="modal-field-label">ICON</div>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
-      <div id="ec-icon-preview" style="width:64px;height:64px;border-radius:16px;border:1.5px solid rgba(30,58,95,0.12);background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
-      <div style="flex:1;">
-        <input id="ec-emoji" type="text" maxlength="4" placeholder="Paste emoji…" oninput="onEcEmojiInput(this)"
-          style="width:100%;padding:10px 12px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;margin-bottom:6px;"/>
-        <div style="font-size:11px;color:#8A9BAA;">Type or paste an emoji, or leave blank to use the category icon.</div>
-        <div style="display:flex;gap:12px;margin-top:6px;">
-          <label for="ecLogoUpload" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#3EC6D8;cursor:pointer;font-family:'DM Sans',sans-serif;">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3EC6D8" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Upload image instead
-          </label>
-          <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
-        </div>
-        <input type="file" id="ecLogoUpload" accept="image/*" style="display:none;" onchange="handleEcLogoUpload(event)"/>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div id="ec-icon-preview" style="width:56px;height:56px;border-radius:14px;border:1.5px solid rgba(30,58,95,0.12);background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;gap:4px;">
+        <button id="ec-tab-btn-emoji"  onclick="switchEcTab('emoji')"  style="flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;background:#1E3A5F;color:white;">Emoji</button>
+        <button id="ec-tab-btn-icons"  onclick="switchEcTab('icons')"  style="flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;background:rgba(30,58,95,0.08);color:#5A6A7A;">Icons</button>
+        <button id="ec-tab-btn-upload" onclick="switchEcTab('upload')" style="flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;background:rgba(30,58,95,0.08);color:#5A6A7A;">Upload</button>
       </div>
     </div>
+    <div style="border-radius:12px;overflow:hidden;background:rgba(30,58,95,0.04);margin-bottom:8px;">
+      <div id="ecTabEmoji" style="max-height:160px;overflow-y:auto;padding:8px 6px;">
+        <div id="ec-emoji-grid"></div>
+      </div>
+      <div id="ecTabIcons" style="display:none;max-height:160px;overflow-y:auto;padding:8px;">
+        <div id="ec-icon-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;"></div>
+      </div>
+      <div id="ecTabUpload" style="display:none;padding:16px;text-align:center;">
+        <label for="ecLogoUpload" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#1E3A5F;color:white;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Upload Image
+        </label>
+        <input type="file" id="ecLogoUpload" accept="image/*" style="display:none;" onchange="handleEcLogoUpload(event)"/>
+        <div style="font-size:11px;color:#8A9BAA;margin-top:8px;">Choose a photo from your library</div>
+        <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;margin-top:6px;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
+      </div>
+    </div>
+    <button id="ecClearIconBtn" onclick="clearEcIcon()" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:0 0 14px;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove icon</button>
 
     <!-- Name -->
     <div class="modal-field-label">CURRENT NAME</div>
@@ -4204,6 +4215,78 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   // ── EDIT CURRENT ──
   let ecLogoDataUrl = null;
   let ecEmoji = null;
+  let ecIconKey = null;
+
+  var EC_EMOJI_DATA = [
+    {cat:'Work',     emojis:['🎯','📝','✅','📌','💡','🧠','📊','💼','🗂️','📋','📅','🔖','⏰','🔧','⚙️']},
+    {cat:'Creative', emojis:['🎨','✏️','🖌️','📸','🎬','🎵','🎸','🎹','🎤','🎭','✍️','🖼️']},
+    {cat:'Wellness', emojis:['💪','🏃','🧘','🏋️','🌿','💊','🛌','❤️','🥗','🏥']},
+    {cat:'Home',     emojis:['🏠','🌱','🍳','☕','🍕','🛒','🧹','🍵','🌻','🪴']},
+    {cat:'Finance',  emojis:['💰','💳','📦','💸','🏦','💹','🤝','📈','💵']},
+    {cat:'Learning', emojis:['📚','🔬','🖥️','🔭','🎓','📐','💻','🧮','📖']},
+    {cat:'Nature',   emojis:['🌊','🌸','🌙','☀️','🌈','🔥','⭐','🌺','🦋','❄️','🌿','🌻','🌍']},
+    {cat:'Travel',   emojis:['🚀','✈️','🚗','🏖️','🗺️','🧭','🏔️']},
+    {cat:'Social',   emojis:['👥','💬','📱','✉️','🤝','🎁','🎉','🥂']}
+  ];
+
+  var EC_ICON_KEYS = ['PRODUCTS','CONTENT','FINANCE','HEALTH','FITNESS','CREATIVE','HOME','LEARNING','TRAVEL','RELATIONSHIPS','MINDFULNESS','WORK','HABIT','PERSONAL'];
+
+  function renderEcEmojiGrid() {
+    const grid = document.getElementById('ec-emoji-grid');
+    if (!grid) return;
+    grid.innerHTML = EC_EMOJI_DATA.map(({cat, emojis}) => `
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:#8A9BAA;padding:4px 2px 2px;">${cat.toUpperCase()}</div>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);margin-bottom:4px;">
+        ${emojis.map(e => `<button onclick="selectEcEmoji('${e}')" style="background:none;border:none;cursor:pointer;font-size:20px;line-height:1;padding:5px;border-radius:6px;">${e}</button>`).join('')}
+      </div>`).join('');
+  }
+
+  function renderEcIconGrid() {
+    const grid = document.getElementById('ec-icon-grid');
+    if (!grid) return;
+    grid.innerHTML = EC_ICON_KEYS.map(key => {
+      const sel = ecIconKey === key;
+      return `<button onclick="selectEcIconKey('${key}')" style="background:${sel?'rgba(62,198,216,0.12)':'rgba(255,255,255,0.6)'};border:1.5px solid ${sel?'#3EC6D8':'rgba(30,58,95,0.1)'};border-radius:10px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;">
+        ${getCategoryIcon(key,20).replace('stroke="#5A6A7A"','stroke="#3EC6D8"')}
+        <span style="font-size:8px;font-weight:600;color:#8A9BAA;letter-spacing:0.04em;">${key.slice(0,7)}</span>
+      </button>`;
+    }).join('');
+  }
+
+  function switchEcTab(tab) {
+    ['emoji','icons','upload'].forEach(t => {
+      const panel = document.getElementById('ecTab' + t.charAt(0).toUpperCase() + t.slice(1));
+      const btn   = document.getElementById('ec-tab-btn-' + t);
+      if (panel) panel.style.display = t === tab ? (t === 'emoji' || t === 'icons' ? 'block' : 'block') : 'none';
+      if (btn) { btn.style.background = t === tab ? '#1E3A5F' : 'rgba(30,58,95,0.08)'; btn.style.color = t === tab ? 'white' : '#5A6A7A'; }
+    });
+  }
+
+  function selectEcEmoji(emoji) {
+    ecEmoji = emoji; ecIconKey = null; ecLogoDataUrl = null;
+    document.getElementById('ecLogoUpload').value = '';
+    document.getElementById('ecClearLogoBtn').style.display = 'none';
+    document.getElementById('ecClearIconBtn').style.display = 'inline';
+    updateEcIconPreview(null);
+  }
+
+  function selectEcIconKey(key) {
+    ecIconKey = key; ecEmoji = null; ecLogoDataUrl = null;
+    document.getElementById('ecLogoUpload').value = '';
+    document.getElementById('ecClearLogoBtn').style.display = 'none';
+    document.getElementById('ecClearIconBtn').style.display = 'inline';
+    updateEcIconPreview(null);
+    renderEcIconGrid();
+  }
+
+  function clearEcIcon() {
+    ecEmoji = null; ecIconKey = null; ecLogoDataUrl = null;
+    document.getElementById('ecLogoUpload').value = '';
+    document.getElementById('ecClearLogoBtn').style.display = 'none';
+    document.getElementById('ecClearIconBtn').style.display = 'none';
+    renderEcIconGrid();
+    updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
+  }
 
   function openEditCurrent() {
     if (!currentPageCurrentId) return;
@@ -4214,9 +4297,15 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     document.getElementById('ec-category').value = current.category || '';
     ecLogoDataUrl = current.logo || null;
     ecEmoji = current.emoji || null;
-    document.getElementById('ec-emoji').value = ecEmoji || '';
+    ecIconKey = current.iconKey || null;
+
+    renderEcEmojiGrid();
+    renderEcIconGrid();
+    switchEcTab('emoji');
     updateEcIconPreview(current);
+
     document.getElementById('ecClearLogoBtn').style.display = ecLogoDataUrl ? 'inline' : 'none';
+    document.getElementById('ecClearIconBtn').style.display = (ecEmoji || ecIconKey) ? 'inline' : 'none';
 
     document.getElementById('editCurrentModal').classList.add('open');
   }
@@ -4227,25 +4316,17 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   function updateEcIconPreview(current) {
     const preview = document.getElementById('ec-icon-preview');
     if (!preview) return;
-    const emoji = ecEmoji || (current && current.emoji);
-    const logo = ecLogoDataUrl || (current && current.logo);
+    const emoji   = ecEmoji   || (current && current.emoji);
+    const logo    = ecLogoDataUrl || (current && current.logo);
+    const iconKey = ecIconKey || (current && current.iconKey);
     const category = (current && current.category) || document.getElementById('ec-category')?.value || '';
     if (emoji) {
-      preview.innerHTML = `<span style="font-size:32px;line-height:1;">${emoji}</span>`;
+      preview.innerHTML = `<span style="font-size:28px;line-height:1;">${emoji}</span>`;
     } else if (logo) {
       preview.innerHTML = `<img src="${logo}" style="width:100%;height:100%;object-fit:cover;"/>`;
     } else {
-      preview.innerHTML = getCategoryIcon(category, 28).replace('stroke="#5A6A7A"', 'stroke="#3EC6D8"');
+      preview.innerHTML = getCategoryIcon(iconKey || category, 26).replace('stroke="#5A6A7A"','stroke="#3EC6D8"');
     }
-  }
-
-  function onEcEmojiInput(input) {
-    // Keep only the first grapheme cluster (one emoji)
-    const v = [...input.value].slice(0, 2).join('');
-    input.value = v;
-    ecEmoji = v || null;
-    if (ecEmoji) { ecLogoDataUrl = null; document.getElementById('ecClearLogoBtn').style.display = 'none'; }
-    updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
 
   function handleEcLogoUpload(event) {
@@ -4254,9 +4335,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const reader = new FileReader();
     reader.onload = (e) => {
       ecLogoDataUrl = e.target.result;
-      ecEmoji = null;
-      document.getElementById('ec-emoji').value = '';
+      ecEmoji = null; ecIconKey = null;
       document.getElementById('ecClearLogoBtn').style.display = 'inline';
+      document.getElementById('ecClearIconBtn').style.display = 'none';
       updateEcIconPreview(null);
     };
     reader.readAsDataURL(file);
@@ -4265,10 +4346,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   function clearEcLogo() {
     ecLogoDataUrl = null;
     document.getElementById('ecLogoUpload').value = '';
-    const clearBtn = document.getElementById('ecClearLogoBtn');
-    if (clearBtn) clearBtn.style.display = 'none';
-    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
-    updateEcIconPreview(current);
+    document.getElementById('ecClearLogoBtn').style.display = 'none';
+    updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
 
   function saveEditCurrent() {
@@ -4283,7 +4362,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     current.name     = newName;
     current.category = newCat;
     current.logo     = ecLogoDataUrl || null;
-    current.emoji    = ecEmoji || null;
+    current.emoji    = ecEmoji    || null;
+    current.iconKey  = ecIconKey  || null;
     save();
 
     // Update header
