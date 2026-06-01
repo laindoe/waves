@@ -745,13 +745,35 @@
   /* Task items */
   .cp-task-list { display: flex; flex-direction: column; }
 
+  .cp-task-swipe-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cp-task-swipe-actions {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: 112px; display: flex; align-items: stretch;
+  }
+
+  .cp-task-swipe-edit-btn, .cp-task-swipe-delete-btn {
+    flex: 1; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+
+  .cp-task-swipe-edit-btn { background: rgba(62,198,216,0.1); }
+  .cp-task-swipe-delete-btn { background: none; }
+
   .cp-task-item {
     display: flex; align-items: center; gap: 12px;
     padding: 13px 4px;
     border-bottom: 1px solid rgba(30,58,95,0.06);
+    touch-action: pan-y;
+    transition: transform 0.25s ease;
+    background: white;
+    position: relative;
   }
 
-  .cp-task-item:last-child { border-bottom: none; }
+  .cp-task-swipe-wrap:last-child .cp-task-item { border-bottom: none; }
 
   .cp-checkbox {
     width: 22px; height: 22px; border-radius: 6px;
@@ -2618,16 +2640,26 @@
     const display = currentFilter === 'next5' ? incomplete.slice(0, 3) : incomplete;
 
     list.innerHTML = display.map(t => `
-      <div class="cp-task-item" id="task-${t.id}" data-task-id="${t.id}">
-        <div class="cp-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask('${t.id}')">
-          ${t.done ? '<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+      <div class="cp-task-swipe-wrap" data-task-id="${t.id}">
+        <div class="cp-task-swipe-actions">
+          <button class="cp-task-swipe-edit-btn" onclick="editTaskInline('${t.id}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3EC6D8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="cp-task-swipe-delete-btn" onclick="deleteTask('${t.id}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05C5C" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
-        <span class="cp-task-name ${t.done ? 'done' : ''}" ondblclick="editTaskInline('${t.id}', this)">${t.name}</span>
-        <svg class="cp-task-drag" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-        <svg onclick="deleteTask('${t.id}')" style="cursor:pointer;flex-shrink:0;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        <div class="cp-task-item" id="task-${t.id}" data-task-id="${t.id}">
+          <div class="cp-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask('${t.id}')">
+            ${t.done ? '<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+          </div>
+          <span class="cp-task-name ${t.done ? 'done' : ''}" ondblclick="editTaskInline('${t.id}')">${t.name}</span>
+          <svg class="cp-task-drag" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        </div>
       </div>
     `).join('');
     initTaskDragDrop();
+    initTaskSwipe();
 
     document.getElementById('completedLabel').textContent = `View Completed (${completed.length})`;
     completedList.innerHTML = completed.map(t => `
@@ -2764,8 +2796,10 @@
     renderTasks();
   }
 
-  function editTaskInline(id, el) {
-    if (el.querySelector('input')) return;
+  function editTaskInline(id) {
+    if (_taskOpenRow) { _taskOpenRow.style.transform = 'translateX(0)'; _taskOpenRow = null; }
+    const el = document.querySelector(`#task-${id} .cp-task-name`);
+    if (!el || el.querySelector('input')) return;
     const task = DB_TASKS.find(t => t.id === id);
     if (!task) return;
     const original = task.name;
@@ -2798,7 +2832,7 @@
       const handle = e.target.closest('.cp-task-drag');
       if (!handle) return;
       e.preventDefault();
-      dragging = handle.closest('.cp-task-item');
+      dragging = handle.closest('.cp-task-swipe-wrap');
       if (!dragging) return;
       const touch = e.touches[0];
       const rect = dragging.getBoundingClientRect();
@@ -2822,7 +2856,7 @@
       const el = document.elementFromPoint(touch.clientX, touch.clientY);
       clone.style.display = '';
       if (!el) return;
-      const item = el.closest('.cp-task-item');
+      const item = el.closest('.cp-task-swipe-wrap');
       if (item && item !== dragging && item.closest('#taskList') === list) {
         const r = item.getBoundingClientRect();
         if (touch.clientY < r.top + r.height / 2) list.insertBefore(placeholder, item);
@@ -2837,7 +2871,7 @@
       placeholder.remove();
       clone.remove();
       // Persist new order
-      const newIds = Array.from(list.querySelectorAll('.cp-task-item[data-task-id]')).map(el => el.dataset.taskId);
+      const newIds = Array.from(list.querySelectorAll('.cp-task-swipe-wrap[data-task-id]')).map(el => el.dataset.taskId);
       const newSet = new Set(newIds);
       let insertIdx = DB_TASKS.findIndex(t => newSet.has(t.id));
       if (insertIdx < 0) insertIdx = 0;
@@ -2848,6 +2882,44 @@
       save();
       dragging = null; clone = null; placeholder = null;
     }, { passive: false });
+  }
+
+  var _taskOpenRow = null;
+  function initTaskSwipe() {
+    _taskOpenRow = null;
+    const ACTIONS_WIDTH = 112;
+    document.querySelectorAll('#taskList .cp-task-item').forEach(row => {
+      let startX = 0, active = false;
+      row.addEventListener('touchstart', e => {
+        if (e.target.closest('.cp-task-drag') || e.target.closest('.cp-checkbox')) return;
+        startX = e.touches[0].clientX;
+        active = true;
+        row.style.transition = 'none';
+      }, { passive: true });
+      row.addEventListener('touchmove', e => {
+        if (!active) return;
+        const dx = e.touches[0].clientX - startX;
+        const base = (_taskOpenRow === row) ? -ACTIONS_WIDTH : 0;
+        row.style.transform = `translateX(${Math.min(0, Math.max(-ACTIONS_WIDTH, base + dx))}px)`;
+      }, { passive: true });
+      row.addEventListener('touchend', e => {
+        if (!active) return;
+        active = false;
+        const dx = e.changedTouches[0].clientX - startX;
+        const wasOpen = _taskOpenRow === row;
+        row.style.transition = 'transform 0.25s ease';
+        if (!wasOpen && dx < -30) {
+          if (_taskOpenRow) _taskOpenRow.style.transform = 'translateX(0)';
+          row.style.transform = `translateX(-${ACTIONS_WIDTH}px)`;
+          _taskOpenRow = row;
+        } else if (wasOpen && dx > 20) {
+          row.style.transform = 'translateX(0)';
+          _taskOpenRow = null;
+        } else {
+          row.style.transform = wasOpen ? `translateX(-${ACTIONS_WIDTH}px)` : 'translateX(0)';
+        }
+      }, { passive: true });
+    });
   }
 
   function openCurrent(waveName, currentName) {
