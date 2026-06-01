@@ -4198,7 +4198,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         <div style="margin-top:14px;text-align:left;">
           <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:6px;">CHOOSE GENMOJI</div>
           <div id="ecPasteZone" contenteditable="true" onpaste="handleEcPasteEvent(event)"
-            style="width:100%;min-height:52px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;padding:12px;font-size:13px;color:#8A9BAA;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;-webkit-user-select:text;user-select:text;display:flex;align-items:center;justify-content:center;overflow:hidden;">Long-press → Paste</div>
+            style="width:100%;min-height:52px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;padding:12px;font-size:13px;color:#8A9BAA;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;-webkit-user-select:text;user-select:text;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
         </div>
         <button id="ecClearLogoBtn" onclick="clearEcLogo()" style="display:none;margin-top:8px;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:11px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Remove image</button>
       </div>
@@ -4282,7 +4282,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const inp = document.getElementById('ec-emoji-input');
     if (inp) inp.value = '';
     const pz = document.getElementById('ecPasteZone');
-    if (pz) pz.innerHTML = 'Long-press → Paste';
+    if (pz) pz.innerHTML = '';
     switchEcTab('emoji');
     renderEcIconGrid();
     updateEcIconPreview(null);
@@ -4308,7 +4308,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const emojiInput = document.getElementById('ec-emoji-input');
     if (emojiInput) emojiInput.value = ecEmoji || '';
     const pz = document.getElementById('ecPasteZone');
-    if (pz && !ecLogoDataUrl) pz.innerHTML = 'Long-press → Paste';
+    if (pz && !ecLogoDataUrl) pz.innerHTML = '';
 
     renderEcIconGrid();
     if (ecLogoDataUrl)  switchEcTab('upload');
