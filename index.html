@@ -2762,8 +2762,9 @@
     const sel = document.getElementById('addTaskPositionSelect');
     if (sel) {
       const tasks = getTasksForCurrent(currentPageCurrentId).filter(t => !t.done);
-      sel.innerHTML = '<option value="end">End of list</option>' +
-        tasks.map(t => `<option value="${t.id}">Before: ${t.name}</option>`).join('');
+      sel.innerHTML = '<option value="top">Top of list</option>' +
+        tasks.map(t => `<option value="${t.id}">Before: ${t.name}</option>`).join('') +
+        '<option value="end">End of list</option>';
     }
     document.getElementById('addTaskModal').classList.add('open');
     setTimeout(() => nameInput && nameInput.focus(), 100);
@@ -2783,6 +2784,10 @@
     const beforeId = sel ? sel.value : 'end';
     if (beforeId === 'end') {
       DB_TASKS.push(newTask);
+    } else if (beforeId === 'top') {
+      const firstIdx = DB_TASKS.findIndex(t => t.currentId === currentPageCurrentId);
+      if (firstIdx >= 0) DB_TASKS.splice(firstIdx, 0, newTask);
+      else DB_TASKS.push(newTask);
     } else {
       const idx = DB_TASKS.findIndex(t => t.id === beforeId);
       if (idx >= 0) DB_TASKS.splice(idx, 0, newTask);
