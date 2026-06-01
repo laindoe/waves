@@ -4194,8 +4194,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
               style="width:100%;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
           </div>
         </div>
+        <button id="ecClearIconBtn" onclick="clearEcIcon()" style="display:none;margin-top:8px;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:12px;padding:2px 0;font-family:'DM Sans',sans-serif;text-decoration:underline;">Clear</button>
       </div>
-      <button id="ecClearIconBtn" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:13px;padding:4px 12px 8px;font-family:'DM Sans',sans-serif;" onclick="clearEcIcon()">Remove</button>
       <div id="ecTabIcons" style="display:none;max-height:160px;overflow-y:auto;padding:8px;">
         <div id="ec-icon-grid" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;"></div>
       </div>
@@ -4256,6 +4256,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     ecEmoji = [...input.value].slice(0, 2).join('') || null;
     ecIconKey = null; ecLogoDataUrl = null;
     document.getElementById('ecClearLogoBtn').style.display = 'none';
+    document.getElementById('ecClearIconBtn').style.display = ecEmoji ? 'block' : 'none';
     updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
 
@@ -4282,7 +4283,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     ecEmoji = null; ecIconKey = null; ecLogoDataUrl = null;
     document.getElementById('ecLogoUpload').value = '';
     document.getElementById('ecClearLogoBtn').style.display = 'none';
-    
+    document.getElementById('ecClearIconBtn').style.display = 'none';
     const inp = document.getElementById('ec-emoji-input');
     if (inp) inp.value = '';
     const gi = document.getElementById('ec-genmoji-input');
@@ -4310,6 +4311,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     const emojiInput = document.getElementById('ec-emoji-input');
     if (emojiInput) emojiInput.value = ecEmoji || '';
+    document.getElementById('ecClearIconBtn').style.display = (ecEmoji || ecIconKey) ? 'block' : 'none';
     renderEcIconGrid();
     switchEcTab('emoji');
     updateEcIconPreview(current);
