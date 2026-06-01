@@ -4190,12 +4190,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           </div>
           <div style="flex:1;">
             <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.04em;margin-bottom:5px;text-align:center;">GENMOJI</div>
-            <div id="ecPasteZone" contenteditable="true" onpaste="handleEcPasteEvent(event)" oninput="onEcGenmojiInput(this)"
-              style="width:100%;min-height:46px;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;-webkit-user-select:text;user-select:text;overflow:hidden;display:block;"></div>
+            <input id="ecPasteZone" type="text" maxlength="4" oninput="onEcGenmojiInput(this)"
+              style="width:100%;padding:10px;border:1.5px solid rgba(30,58,95,0.15);border-radius:10px;font-size:22px;font-family:'DM Sans',sans-serif;color:#1E3A5F;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;text-align:center;"/>
           </div>
         </div>
       </div>
-      <button id="ecClearIconBtn" style="display:none;" onclick="clearEcIcon()"></button>
+      <button id="ecClearIconBtn" style="display:none;background:none;border:none;cursor:pointer;color:#8A9BAA;font-size:13px;padding:4px 12px 8px;font-family:'DM Sans',sans-serif;" onclick="clearEcIcon()">Remove</button>
       <div id="ecTabIcons" style="display:none;max-height:160px;overflow-y:auto;padding:8px;">
         <div id="ec-icon-grid" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;"></div>
       </div>
@@ -4263,9 +4263,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function onEcGenmojiInput(el) {
-    if (el.querySelector('img')) return; // image paste handled by handleEcPasteEvent
-    const text = el.textContent.trim();
-    ecEmoji = text ? [...text].slice(0, 2).join('') : null;
+    const v = [...el.value].slice(0, 2).join('');
+    el.value = v;
+    ecEmoji = v || null;
     ecLogoDataUrl = null; ecIconKey = null;
     document.getElementById('ecClearLogoBtn').style.display = 'none';
     updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
@@ -4298,7 +4298,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const inp = document.getElementById('ec-emoji-input');
     if (inp) inp.value = '';
     const pz = document.getElementById('ecPasteZone');
-    if (pz) pz.innerHTML = '';
+    if (pz) pz.value = '';
     renderEcIconGrid();
     updateEcIconPreview(DB_CURRENTS.find(c => c.id === currentPageCurrentId));
   }
@@ -4367,8 +4367,6 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       ecEmoji = null; ecIconKey = null;
       document.getElementById('ecClearIconBtn').style.display = 'inline';
       document.getElementById('ecClearLogoBtn').style.display = 'none';
-      const pz = document.getElementById('ecPasteZone');
-      if (pz) pz.innerHTML = '';
       updateEcIconPreview(null);
     };
     reader.readAsDataURL(blob);
