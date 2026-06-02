@@ -2342,8 +2342,7 @@
     const byCategory = {};
     (wave.categories || []).forEach(cat => { byCategory[cat] = []; });
     backlogCurrents.forEach(c => {
-      if (!byCategory[c.category]) byCategory[c.category] = [];
-      byCategory[c.category].push(c);
+      if (byCategory[c.category] !== undefined) byCategory[c.category].push(c);
     });
 
     container.innerHTML = Object.entries(byCategory).map(([cat, currents]) => `
@@ -3727,8 +3726,14 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         wave.logo = editLogoDataUrl || null;
         wave.color = editSelectedColor;
         wave.categories = editCategories;
-        // Update name references in currents
-        DB_CURRENTS.forEach(c => { if (c.waveId === wave.id) { /* waveId stays, name is on wave */ } });
+        // Remove currents (and their tasks) whose category was deleted
+        const removedIds = new Set(
+          DB_CURRENTS.filter(c => c.waveId === wave.id && !editCategories.includes(c.category)).map(c => c.id)
+        );
+        if (removedIds.size) {
+          DB_TASKS = DB_TASKS.filter(t => !removedIds.has(t.currentId));
+          DB_CURRENTS = DB_CURRENTS.filter(c => !removedIds.has(c.id));
+        }
       }
     } else {
       // New wave
