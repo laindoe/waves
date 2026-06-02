@@ -1565,8 +1565,20 @@
   </div>
 </div><!-- end page-current -->
 
+<!-- CELEBRATION MODAL -->
+<div id="celebrationModal" style="display:none;position:fixed;inset:0;z-index:9000;align-items:center;justify-content:center;padding:24px;">
+  <canvas id="confettiCanvas" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9001;"></canvas>
+  <div style="position:relative;z-index:9002;background:white;border-radius:24px;padding:36px 28px 28px;width:100%;max-width:380px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.18);">
+    <div style="font-size:52px;margin-bottom:10px;">🌊</div>
+    <div style="font-size:22px;font-weight:800;color:#1E3A5F;letter-spacing:-0.01em;margin-bottom:6px;">You Made It to Shore!</div>
+    <div id="celeb-subtitle" style="font-size:14px;color:#8A9BAA;margin-bottom:24px;line-height:1.5;"></div>
+    <div id="celeb-count" style="font-size:52px;font-weight:300;color:#1E3A5F;line-height:1;font-family:'DM Sans',sans-serif;"></div>
+    <div id="celeb-count-label" style="font-size:14px;color:#8A9BAA;margin-bottom:28px;"></div>
+    <button onclick="celebrationNextWave()" style="width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(180deg,#4E2CC7,#3B1FA6);color:white;font-size:14px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:12px;">NEXT WAVE →</button>
+    <button onclick="celebrationGoBack()" style="width:100%;padding:14px;border:1.5px solid rgba(30,58,95,0.15);border-radius:14px;background:none;color:#8A9BAA;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">Go Back — I'm Not Done Yet</button>
+  </div>
+</div>
 
-<!-- PAGE: OCEAN -->
 <div class="page" id="page-ocean">
 
   <!-- SHARED HEADER -->
@@ -1597,8 +1609,25 @@
     <!-- BACKLOG CONTENT -->
     <div id="oceanTabContent"></div>
 
+    <!-- ARCHIVES LINK -->
+    <div id="ocean-archive-link" style="display:none;text-align:center;padding:12px 0 24px;">
+      <button onclick="openArchivesModal()" style="background:none;border:none;font-family:'DM Sans',sans-serif;font-size:12px;color:#B0BEC5;cursor:pointer;letter-spacing:0.06em;">VIEW ARCHIVES</button>
+    </div>
+
   </div>
 </div><!-- end page-ocean -->
+
+<!-- ARCHIVES MODAL -->
+<div class="modal-overlay" id="archivesModal" onclick="if(event.target===this)closeArchivesModal()">
+  <div class="modal-card" style="max-height:80vh;overflow-y:auto;">
+    <button class="modal-close" onclick="closeArchivesModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-title">ARCHIVES</div>
+    <div class="modal-subtitle">Currents you've ridden to shore.</div>
+    <div id="archivesContent" style="margin-top:16px;"></div>
+  </div>
+</div>
 
 
 
@@ -2163,7 +2192,11 @@
   }
   function getOceanCurrents(waveName) {
     const wave = getWaveByName(waveName);
-    return wave ? DB_CURRENTS.filter(c => c.waveId === wave.id && !c.active) : [];
+    return wave ? DB_CURRENTS.filter(c => c.waveId === wave.id && !c.active && !c.archived) : [];
+  }
+  function getArchivedCurrents(waveName) {
+    const wave = getWaveByName(waveName);
+    return wave ? DB_CURRENTS.filter(c => c.waveId === wave.id && c.archived) : [];
   }
   function getTasksForCurrent(currentId) {
     return DB_TASKS.filter(t => t.currentId === currentId);
@@ -2400,6 +2433,36 @@
     `).join('') || '<div style="padding:20px;text-align:center;color:#8A9BAA;font-size:13px;">No currents in backlog.</div>';
     initOceanDragDrop();
     initOceanSwipe();
+    // Show archive link if this wave has any archived currents
+    const archiveLink = document.getElementById('ocean-archive-link');
+    if (archiveLink) {
+      const hasArchived = DB_CURRENTS.some(c => c.waveId === wave.id && c.archived);
+      archiveLink.style.display = hasArchived ? 'block' : 'none';
+    }
+  }
+
+  function openArchivesModal() {
+    const wave = DB_WAVES.find(w => w.id === activeOceanWaveId);
+    const archived = wave ? getArchivedCurrents(wave.name) : [];
+    const content = document.getElementById('archivesContent');
+    if (content) {
+      content.innerHTML = archived.length ? archived.map(c => {
+        const tasks = getTasksForCurrent(c.id);
+        return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(30,58,95,0.07);">
+          <svg width="16" height="11" viewBox="0 0 26 14" fill="none"><path d="M1 7 C4 3,8 3,13 7 C18 11,22 11,25 7" stroke="${wave.color || '#3EC6D8'}" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;color:#1E3A5F;">${c.name}</div>
+            <div style="font-size:11px;color:#8A9BAA;">${c.category} · ${tasks.length} tasks</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3EC6D8" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>`;
+      }).join('') : '<div style="text-align:center;color:#8A9BAA;font-size:13px;padding:20px 0;">No archived currents yet.</div>';
+    }
+    document.getElementById('archivesModal').classList.add('open');
+  }
+
+  function closeArchivesModal() {
+    document.getElementById('archivesModal').classList.remove('open');
   }
 
   function deleteOceanCurrent(id) {
@@ -2735,7 +2798,6 @@
         recordActivity();
       } else {
         task.completedAt = null;
-        // If no tasks remain done today, remove today from activity so streak doesn't count it
         const today = todayStr();
         const stillDoneToday = DB_TASKS.filter(t => t.done && t.completedAt === today).length;
         if (stillDoneToday === 0) {
@@ -2748,7 +2810,113 @@
       renderTasks();
       renderWavesAccordion();
       renderTodayPage();
+      // Check if all tasks for this current are now done
+      if (task.done && currentPageCurrentId === task.currentId) {
+        const allTasks = getTasksForCurrent(task.currentId);
+        if (allTasks.length > 0 && allTasks.every(t => t.done)) {
+          showCelebration(task.currentId, id);
+        }
+      }
     }
+  }
+
+  var _celebLastTaskId = null;
+  var _celebCurrentId = null;
+  var _confettiFrame = null;
+
+  function showCelebration(currentId, lastTaskId) {
+    _celebCurrentId = currentId;
+    _celebLastTaskId = lastTaskId;
+    const current = DB_CURRENTS.find(c => c.id === currentId);
+    const wave = current ? DB_WAVES.find(w => w.id === current.waveId) : null;
+    const tasks = getTasksForCurrent(currentId);
+    const modal = document.getElementById('celebrationModal');
+    document.getElementById('celeb-subtitle').textContent = '"' + (current ? current.name : '') + '" is complete.';
+    document.getElementById('celeb-count').textContent = tasks.length;
+    document.getElementById('celeb-count-label').textContent = tasks.length === 1 ? 'task completed' : 'tasks completed';
+    modal.style.display = 'flex';
+    startConfetti(wave ? wave.color : '#3EC6D8');
+  }
+
+  function celebrationGoBack() {
+    stopConfetti();
+    document.getElementById('celebrationModal').style.display = 'none';
+    if (_celebLastTaskId) {
+      const task = DB_TASKS.find(t => t.id === _celebLastTaskId);
+      if (task) {
+        task.done = false;
+        task.completedAt = null;
+        save();
+        renderTasks();
+        renderWavesAccordion();
+        renderTodayPage();
+      }
+    }
+    _celebLastTaskId = null;
+    _celebCurrentId = null;
+  }
+
+  function celebrationNextWave() {
+    stopConfetti();
+    document.getElementById('celebrationModal').style.display = 'none';
+    if (_celebCurrentId) {
+      const current = DB_CURRENTS.find(c => c.id === _celebCurrentId);
+      if (current) {
+        current.active = false;
+        current.archived = true;
+        const wave = DB_WAVES.find(w => w.id === current.waveId);
+        save();
+        renderWavesAccordion();
+        renderTodayPage();
+        showPage('ocean');
+        if (wave) {
+          activeOceanWaveId = wave.id;
+          renderOceanTabs();
+        }
+      }
+    }
+    _celebLastTaskId = null;
+    _celebCurrentId = null;
+  }
+
+  function startConfetti(accentColor) {
+    const canvas = document.getElementById('confettiCanvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    const colors = [accentColor, '#4E2CC7', '#FFB38A', '#B388FF', '#3EC6D8', '#FFD700', '#FF6B9D'];
+    const particles = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * -canvas.height * 0.5,
+      w: 7 + Math.random() * 8,
+      h: 4 + Math.random() * 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      angle: Math.random() * Math.PI * 2,
+      spin: (Math.random() - 0.5) * 0.15,
+      vx: (Math.random() - 0.5) * 2.5,
+      vy: 2.5 + Math.random() * 3.5,
+    }));
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+        p.x += p.vx; p.y += p.vy; p.angle += p.spin;
+        if (p.y > canvas.height + 20) { p.y = -20; p.x = Math.random() * canvas.width; }
+      });
+      _confettiFrame = requestAnimationFrame(draw);
+    }
+    draw();
+  }
+
+  function stopConfetti() {
+    if (_confettiFrame) { cancelAnimationFrame(_confettiFrame); _confettiFrame = null; }
+    const canvas = document.getElementById('confettiCanvas');
+    if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   }
 
   function deleteTask(id) {
