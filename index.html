@@ -4218,10 +4218,10 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     <div class="modal-field-label">CATEGORY</div>
     <select class="modal-input" id="ec-category" style="margin-bottom:24px;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A9BAA' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;"></select>
 
-    <button class="modal-save-btn" onclick="saveEditCurrent()">SAVE CHANGES</button>
+    <button type="button" class="modal-save-btn" onclick="saveEditCurrent()">SAVE CHANGES</button>
 
     <!-- Delete -->
-    <button onclick="confirmDeleteCurrent()" style="width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(220,60,60,0.2);border-radius:14px;font-size:13px;font-weight:600;color:rgba(200,50,50,0.5);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">DELETE CURRENT</button>
+    <button type="button" onclick="confirmDeleteCurrent()" style="width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(220,60,60,0.2);border-radius:14px;font-size:13px;font-weight:600;color:rgba(200,50,50,0.5);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">DELETE CURRENT</button>
   </div>
 </div>
 
@@ -4299,6 +4299,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       if (panel) panel.style.display = t === tab ? 'block' : 'none';
       if (btn) { btn.style.background = t === tab ? 'linear-gradient(180deg,#4E2CC7,#3B1FA6)' : 'rgba(30,58,95,0.08)'; btn.style.color = t === tab ? 'white' : '#5A6A7A'; }
     });
+    const card = document.querySelector('#editCurrentModal .modal-card');
+    if (card) card.scrollTop = 0;
   }
 
   function onEcEmojiInput(input) {
@@ -4365,7 +4367,10 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     document.getElementById('ecClearLogoBtn').style.display = ecLogoDataUrl ? 'inline' : 'none';
 
-    document.getElementById('editCurrentModal').classList.add('open');
+    const modal = document.getElementById('editCurrentModal');
+    modal.classList.add('open');
+    const card = modal.querySelector('.modal-card');
+    if (card) card.scrollTop = 0;
   }
 
   function closeEditCurrent() { document.getElementById('editCurrentModal').classList.remove('open'); }
