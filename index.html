@@ -2320,11 +2320,8 @@
         <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><path d="M7 1L1 7l6 6"/></svg>
       </div>
       <div class="ocean-wave-label">${waves[idx].name}</div>
-      <div style="display:flex;align-items:center;flex:0 0 auto;">
-        <div class="ocean-wave-arrow ${canNext ? 'enabled' : ''}" onclick="${canNext ? `switchOceanTab('${waves[idx+1].id}')` : ''}">
-          <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>
-        </div>
-        <button type="button" onclick="openEditWave('${waves[idx].id}')" style="background:none;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#3EC6D8;cursor:pointer;padding:0 2px 0 10px;">Edit</button>
+      <div class="ocean-wave-arrow ${canNext ? 'enabled' : ''}" onclick="${canNext ? `switchOceanTab('${waves[idx+1].id}')` : ''}">
+        <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>
       </div>`;
     renderOceanContent();
   }
