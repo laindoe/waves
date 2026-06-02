@@ -3188,7 +3188,7 @@
     const { tropSign, tropDeg, sidSign, sidDeg } = getMoonPosition();
     if (illum) illum.textContent = illumination + "% illuminated";
     const signEl = document.getElementById("ts2-sign-info");
-    if (signEl) signEl.textContent = "Tropical: " + tropSign + " " + tropDeg + "°  ·  Vedic: " + sidSign + " " + sidDeg + "°";
+    if (signEl) signEl.textContent = "Sidereal: " + sidSign + " " + sidDeg + "°  ·  Tropical: " + tropSign + " " + tropDeg + "°";
     if (body) body.textContent = data.body;
     if (keywords) {
       keywords.innerHTML = data.keywords.map(k => `
