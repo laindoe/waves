@@ -921,15 +921,15 @@
     position: relative; overflow: hidden; border-radius: 12px;
   }
   .ocean-swipe-delete-bg {
-    position: absolute; right: 0; top: 0; bottom: 0; width: 72px;
-    background: none;
-    display: flex; align-items: center; justify-content: center;
+    position: absolute; right: 0; top: 0; bottom: 0; width: 140px;
+    display: flex; align-items: stretch;
   }
-  .ocean-swipe-delete-bg button {
-    background: none; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    width: 100%; height: 100%;
+  .ocean-swipe-edit-btn, .ocean-swipe-del-btn {
+    flex: 1; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; padding: 0;
   }
+  .ocean-swipe-edit-btn { background: rgba(62,198,216,0.12); }
+  .ocean-swipe-del-btn  { background: none; }
   .ocean-current-row {
     transition: transform 0.25s ease;
     border-radius: 12px;
@@ -2355,7 +2355,10 @@
           ${currents.map(c => `
             <div class="ocean-swipe-wrap">
               <div class="ocean-swipe-delete-bg">
-                <button onclick="deleteOceanCurrent('${c.id}')" title="Delete">
+                <button class="ocean-swipe-edit-btn" onclick="openEditOceanCurrent('${c.id}')" title="Edit">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3EC6D8" stroke-width="2.2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="ocean-swipe-del-btn" onclick="deleteOceanCurrent('${c.id}')" title="Delete">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E05C5C" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
@@ -2464,9 +2467,10 @@
   }
 
   var _oceanOpenRow = null;
+  var editingCurrentId = null;
   function initOceanSwipe() {
     _oceanOpenRow = null;
-    const DELETE_WIDTH = 72;
+    const DELETE_WIDTH = 140;
 
     document.querySelectorAll('.ocean-current-row').forEach(row => {
       let startX = 0, active = false;
@@ -2528,8 +2532,40 @@
     document.getElementById('addCurrentModal').classList.add('open');
   }
 
-  function closeModal() { document.getElementById('addCurrentModal').classList.remove('open'); }
+  function closeModal() {
+    document.getElementById('addCurrentModal').classList.remove('open');
+    if (editingCurrentId) {
+      editingCurrentId = null;
+      document.getElementById('addCurrentModal').querySelector('.modal-title').textContent = 'ADD NEW CURRENT';
+      document.getElementById('addCurrentModal').querySelector('.modal-subtitle').textContent = 'Capture a new current in the ocean.';
+      document.getElementById('addCurrentModal').querySelector('.modal-save-btn').textContent = 'SAVE TO OCEAN';
+    }
+  }
   function closeAddCurrentModal(e) { if (e.target === document.getElementById('addCurrentModal')) closeModal(); }
+
+  function openEditOceanCurrent(id) {
+    const c = DB_CURRENTS.find(cur => cur.id === id);
+    if (!c) return;
+    editingCurrentId = id;
+    const waveSelect = document.getElementById('newCurrentWave');
+    if (waveSelect) {
+      waveSelect.innerHTML = DB_WAVES.map(w =>
+        `<option value="${w.name}" ${w.id === c.waveId ? 'selected' : ''}>${w.name}</option>`
+      ).join('');
+      waveSelect.onchange = populateCurrentCategories;
+    }
+    populateCurrentCategories();
+    const catSelect = document.getElementById('newCurrentCategory');
+    if (catSelect) {
+      Array.from(catSelect.options).forEach(o => { o.selected = o.value.toUpperCase() === c.category.toUpperCase(); });
+    }
+    document.getElementById('newCurrentName').value = c.name;
+    document.getElementById('addCurrentModal').querySelector('.modal-title').textContent = 'EDIT CURRENT';
+    document.getElementById('addCurrentModal').querySelector('.modal-subtitle').textContent = 'Update this current in the ocean.';
+    document.getElementById('addCurrentModal').querySelector('.modal-save-btn').textContent = 'SAVE CHANGES';
+    document.getElementById('addCurrentModal').classList.add('open');
+    if (_oceanOpenRow) { _oceanOpenRow.style.transform = 'translateX(0)'; _oceanOpenRow = null; }
+  }
 
   function saveNewCurrent() {
     const name = document.getElementById('newCurrentName').value.trim();
@@ -2537,12 +2573,18 @@
     const category = document.getElementById('newCurrentCategory').value.toUpperCase();
     if (!name) { document.getElementById('newCurrentName').focus(); return; }
     const wave = getWaveByName(waveName);
-    if (wave) {
-      const id = 'c' + Date.now();
-      DB_CURRENTS.push({ id, waveId: wave.id, name, category, active: false });
+    if (editingCurrentId) {
+      const c = DB_CURRENTS.find(cur => cur.id === editingCurrentId);
+      if (c && wave) { c.name = name; c.waveId = wave.id; c.category = category; save(); switchOceanTab(wave.id); }
+      editingCurrentId = null;
+    } else if (wave) {
+      DB_CURRENTS.push({ id: 'c' + Date.now(), waveId: wave.id, name, category, active: false });
       save();
       switchOceanTab(wave.id);
     }
+    document.getElementById('addCurrentModal').querySelector('.modal-title').textContent = 'ADD NEW CURRENT';
+    document.getElementById('addCurrentModal').querySelector('.modal-subtitle').textContent = 'Capture a new current in the ocean.';
+    document.getElementById('addCurrentModal').querySelector('.modal-save-btn').textContent = 'SAVE TO OCEAN';
     closeModal();
   }
 
