@@ -2307,7 +2307,7 @@
   function renderOceanTabs() {
     const bar = document.getElementById('ocean-tabs-bar');
     if (!bar) return;
-    const waves = DB_WAVES.filter(w => w.active !== false);
+    const waves = DB_WAVES;
     if (!waves.length) { bar.innerHTML = ''; return; }
     if (!activeOceanWaveId || !waves.find(w => w.id === activeOceanWaveId)) {
       activeOceanWaveId = waves[0].id;
