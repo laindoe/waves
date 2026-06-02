@@ -1773,7 +1773,7 @@
           </div>
           <div style="flex:1;">
             <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:2px;" id="bc-birth-display">September 20, 1991</div>
-            <div style="font-size:12px;color:#8A9BAA;">6:06 PM · Norfolk, VA</div>
+            <div style="font-size:12px;color:#8A9BAA;" id="bc-time-location">6:06 PM · Norfolk, VA</div>
           </div>
           <svg id="bc-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A9BAA" stroke-width="2" stroke-linecap="round" style="transition:transform 0.2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -3417,7 +3417,7 @@
 
 ${transitSection}
 
-The person's natal chart details (birth: September 20, 1991, 6:06 PM, Norfolk, VA):
+The person's natal chart details (birth: ${(m => [m.date, m.time, m.location].filter(Boolean).join(', '))(loadBirthMeta())}):
 ${buildChartString()}
 
 Write a personalized transit reading for today. Structure your response as two parts:
@@ -3745,7 +3745,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   // Render wave list whenever settings page opens - called from showPage override below
   document.addEventListener('pageswitched', (e) => {
-    if (e.detail === 'settings') { renderSettingsWaveList(); renderApiKeyStatus(); renderAllAvatars(); }
+    if (e.detail === 'settings') { renderSettingsWaveList(); renderApiKeyStatus(); renderAllAvatars(); renderBirthMetaDisplay(); }
     if (e.detail === 'ocean') { renderOceanTabs(); }
   });
 
@@ -3943,6 +3943,16 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function saveBirthChart() {
+    const metaDate = document.getElementById('bc-meta-date')?.value.trim();
+    const metaTime = document.getElementById('bc-meta-time')?.value.trim();
+    const metaLoc  = document.getElementById('bc-meta-location')?.value.trim();
+    const existingMeta = loadBirthMeta();
+    localStorage.setItem('waves_birth_meta', JSON.stringify({
+      date:     metaDate     || existingMeta.date,
+      time:     metaTime     || existingMeta.time,
+      location: metaLoc      || existingMeta.location
+    }));
+    renderBirthMetaDisplay();
     const chart = {};
     PLANETS.forEach(p => {
       chart[p.key] = {
@@ -3990,11 +4000,42 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     if (!open) renderBirthChartInputs();
   }
 
+  function loadBirthMeta() {
+    try { const s = localStorage.getItem('waves_birth_meta'); if (s) return JSON.parse(s); } catch(e) {}
+    return { date: 'September 20, 1991', time: '6:06 PM', location: 'Norfolk, VA' };
+  }
+
+  function renderBirthMetaDisplay() {
+    const m = loadBirthMeta();
+    const d = document.getElementById('bc-birth-display');
+    const t = document.getElementById('bc-time-location');
+    if (d) d.textContent = m.date || '';
+    if (t) t.textContent = [m.time, m.location].filter(Boolean).join(' · ');
+  }
+
   function renderBirthChartInputs() {
     const list = document.getElementById('bc-placements-list');
     if (!list) return;
     const chart = loadBirthChart();
-    list.innerHTML = PLANETS.map(p => {
+    const meta = loadBirthMeta();
+    const metaCard = `
+      <div class="bc-planet-card" style="margin-bottom:8px;">
+        <div class="bc-grid">
+          <div class="bc-field">
+            <div class="bc-label">Birth Date</div>
+            <input class="bc-input" id="bc-meta-date" type="text" placeholder="e.g. September 20, 1991" value="${meta.date || ''}"/>
+          </div>
+          <div class="bc-field">
+            <div class="bc-label">Birth Time</div>
+            <input class="bc-input" id="bc-meta-time" type="text" placeholder="e.g. 6:06 PM" value="${meta.time || ''}"/>
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <div class="bc-label">Birth Location</div>
+          <input class="bc-input" id="bc-meta-location" type="text" placeholder="e.g. Norfolk, VA" value="${meta.location || ''}" style="width:100%;box-sizing:border-box;"/>
+        </div>
+      </div>`;
+    list.innerHTML = metaCard + PLANETS.map(p => {
       const placement = chart[p.key] || {};
       return `
         <div class="bc-planet-card">
