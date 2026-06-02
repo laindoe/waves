@@ -2338,8 +2338,9 @@
     if (!container) return;
 
     const backlogCurrents = getOceanCurrents(wave.name);
-    // Group by category
+    // Seed all wave categories (so newly-added categories appear even when empty)
     const byCategory = {};
+    (wave.categories || []).forEach(cat => { byCategory[cat] = []; });
     backlogCurrents.forEach(c => {
       if (!byCategory[c.category]) byCategory[c.category] = [];
       byCategory[c.category].push(c);
@@ -3739,6 +3740,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     renderWavesAccordion();
     renderTodayPage();
     renderOceanTabs();
+    renderOceanContent();
   }
 
   // Render wave list whenever settings page opens - called from showPage override below
