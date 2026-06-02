@@ -3521,7 +3521,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     <div id="editWaveCategories" style="margin-bottom:12px;"></div>
     <button onclick="addEditCategory()" style="width:100%;padding:11px;background:none;border:1.5px dashed rgba(30,58,95,0.2);border-radius:12px;font-size:13px;color:#3EC6D8;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:20px;">+ Add Category</button>
 
-    <button class="modal-save-btn" onclick="saveEditWave()">SAVE WAVE</button>
+    <button type="button" class="modal-save-btn" onclick="saveEditWave()">SAVE WAVE</button>
+    <button type="button" id="deleteWaveBtn" onclick="confirmDeleteWave()" style="display:none;width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(220,60,60,0.2);border-radius:14px;font-size:13px;font-weight:600;color:rgba(200,50,50,0.5);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">DELETE WAVE</button>
   </div>
 </div>
 
@@ -3643,7 +3644,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     renderEditCategories();
     const clearBtn = document.getElementById('clearLogoBtn');
     if (clearBtn) clearBtn.style.display = editLogoDataUrl ? 'inline' : 'none';
-    document.getElementById('editWaveModal').classList.add('open');
+    const deleteBtn = document.getElementById('deleteWaveBtn');
+    if (deleteBtn) deleteBtn.style.display = wave ? 'block' : 'none';
+    const modal = document.getElementById('editWaveModal');
+    modal.classList.add('open');
+    const card = modal.querySelector('.modal-card');
+    if (card) card.scrollTop = 0;
   }
 
   function closeEditWave() { document.getElementById('editWaveModal').classList.remove('open'); }
@@ -3734,6 +3740,37 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       });
     }
 
+    save();
+    closeEditWave();
+    renderSettingsWaveList();
+    renderWavesAccordion();
+    renderTodayPage();
+    renderOceanTabs();
+    renderOceanContent();
+  }
+
+  function confirmDeleteWave() {
+    if (!editingWaveId) return;
+    const wave = DB_WAVES.find(w => w.id === editingWaveId);
+    if (!wave) return;
+    const btn = document.getElementById('deleteWaveBtn');
+    if (btn.dataset.confirm !== 'true') {
+      btn.textContent = 'Are you sure?';
+      btn.style.color = '#E05C5C';
+      btn.style.borderColor = 'rgba(224,92,92,0.4)';
+      btn.dataset.confirm = 'true';
+      setTimeout(() => {
+        btn.textContent = 'DELETE WAVE';
+        btn.style.color = 'rgba(200,50,50,0.5)';
+        btn.style.borderColor = 'rgba(220,60,60,0.2)';
+        btn.dataset.confirm = '';
+      }, 3000);
+      return;
+    }
+    const deletedIds = new Set(DB_CURRENTS.filter(c => c.waveId === editingWaveId).map(c => c.id));
+    DB_TASKS    = DB_TASKS.filter(t => !deletedIds.has(t.currentId));
+    DB_CURRENTS = DB_CURRENTS.filter(c => c.waveId !== editingWaveId);
+    DB_WAVES    = DB_WAVES.filter(w => w.id !== editingWaveId);
     save();
     closeEditWave();
     renderSettingsWaveList();
