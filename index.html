@@ -2514,7 +2514,7 @@
   function addNewCurrent() {
     const waveSelect = document.getElementById('newCurrentWave');
     if (waveSelect) {
-      const waves = DB_WAVES.filter(w => w.active !== false);
+      const waves = DB_WAVES;
       waveSelect.innerHTML = waves.map(w =>
         `<option value="${w.name}" ${w.id === activeOceanWaveId ? 'selected' : ''}>${w.name}</option>`
       ).join('');
