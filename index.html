@@ -1266,6 +1266,7 @@
               <div>
                 <div class="ts2-title" id="ts2-phase-name">FULL MOON</div>
                 <div style="font-size:11px;color:#8A9BAA;letter-spacing:0.06em;" id="ts2-illumination">100% illuminated</div>
+                <div style="font-size:10px;color:#8A9BAA;letter-spacing:0.03em;margin-top:2px;" id="ts2-sign-info"></div>
               </div>
             </div>
             <p style="font-size:13px;color:#3A5A6A;line-height:1.7;margin:0 0 14px;" id="ts2-body">Loading...</p>
@@ -3121,15 +3122,15 @@
     const d = (new Date() - J2000) / 86400000;
     const r = Math.PI / 180;
     const L  = (218.316 + 13.176396  * d) % 360;
-    const M  = ((134.963 + 13.064993  * d) % 360) * r;
+    const M  = ((134.963 + 13.064993  * d) % 360) * r;  // Moon anomaly (l')
     const D  = ((297.850 + 12.190749  * d) % 360) * r;
     const F  = ((93.272  + 13.229350  * d) % 360) * r;
-    const Ms = ((357.529 + 0.985608   * d) % 360) * r;
-    const lon = ((L
+    const Ms = ((357.529 + 0.985608   * d) % 360) * r;  // Sun anomaly (l)
+    const tropLon = ((L
       + 6.289 * Math.sin(M)
       - 1.274 * Math.sin(2*D - M)
       + 0.658 * Math.sin(2*D)
-      - 0.213 * Math.sin(2*M)
+      - 0.214 * Math.sin(2*M)
       - 0.186 * Math.sin(Ms)
       - 0.114 * Math.sin(2*F)
       + 0.059 * Math.sin(2*D - 2*M)
@@ -3139,11 +3140,18 @@
       + 0.041 * Math.sin(M - Ms)
       - 0.035 * Math.sin(D)
       - 0.031 * Math.sin(Ms + M)
-      - 0.015 * Math.sin(2*F + Ms)
+      + 0.015 * Math.sin(2*F + M)   // Meeus: +0.015 sin(2F + l'), l' = Moon anomaly
+      + 0.011 * Math.sin(2*D + Ms)
     ) % 360 + 360) % 360;
+    // Lahiri ayanamsha: 23.8532° at J2000.0, precessing ~1.3966°/century
+    const ayanamsha = 23.8532 + (d / 36525) * 1.3966;
+    const sidLon = ((tropLon - ayanamsha) % 360 + 360) % 360;
     const signs = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
                    'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-    return { sign: signs[Math.floor(lon / 30)], degree: Math.floor(lon % 30) };
+    return {
+      tropSign: signs[Math.floor(tropLon / 30)], tropDeg: Math.floor(tropLon % 30),
+      sidSign:  signs[Math.floor(sidLon  / 30)], sidDeg:  Math.floor(sidLon  % 30)
+    };
   }
 
   function getMoonPhase() {
@@ -3176,8 +3184,10 @@
     const keywords = document.getElementById("ts2-keywords");
     if (icon) icon.textContent = data.icon;
     if (name) name.textContent = phase.toUpperCase();
-    const { sign, degree } = getMoonPosition();
-    if (illum) illum.textContent = illumination + "% illuminated · " + sign + " " + degree + "°";
+    const { tropSign, tropDeg, sidSign, sidDeg } = getMoonPosition();
+    if (illum) illum.textContent = illumination + "% illuminated";
+    const signEl = document.getElementById("ts2-sign-info");
+    if (signEl) signEl.textContent = "Tropical: " + tropSign + " " + tropDeg + "°  ·  Vedic: " + sidSign + " " + sidDeg + "°";
     if (body) body.textContent = data.body;
     if (keywords) {
       keywords.innerHTML = data.keywords.map(k => `
