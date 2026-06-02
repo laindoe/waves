@@ -3113,11 +3113,12 @@
     return getCategoryIcon(current.category, size);
   }
 
-  function getCategoryIcon(category, size) {
+  function getCategoryIcon(category, size, color) {
     size = size || 20;
     var cat = (category || '').toUpperCase().trim();
     var s = size;
-    var stroke = '"#5A6A7A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+    var strokeColor = color || '#5A6A7A';
+    var stroke = `"${strokeColor}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"`;
     var icons = {
       'PRODUCTS':  `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke=${stroke}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
       'CONTENT':   `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke=${stroke}><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`,
@@ -4886,7 +4887,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         <div class="wiz-step-title">Confirm Current</div>
         <div class="wiz-step-sub">This current will move from the Ocean into your active wave.</div>
         <div class="wiz-confirm-row">
-          <div class="wiz-confirm-icon">${getCategoryIcon(wizardData.category, 20)}</div>
+          <div class="wiz-confirm-icon">${getCategoryIcon(wizardData.category, 20, waveColor)}</div>
           <div class="wiz-confirm-text">
             <div class="wiz-confirm-label">CURRENT</div>
             <div class="wiz-confirm-value">${wizardData.currentName}</div>
@@ -4902,7 +4903,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           </div>
         </div>
         <div class="wiz-confirm-row">
-          <div class="wiz-confirm-icon">${getCategoryIcon(wizardData.category, 18)}</div>
+          <div class="wiz-confirm-icon">${getCategoryIcon(wizardData.category, 18, waveColor)}</div>
           <div class="wiz-confirm-text">
             <div class="wiz-confirm-label">CATEGORY</div>
             <div class="wiz-confirm-value">${wizardData.category}</div>
@@ -4969,7 +4970,6 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       <div class="wiz-task-list" id="wizTaskList">
         ${wizardData.tasks.map((t, i) => `
           <div class="wiz-task-row">
-            <div class="wiz-task-circle"></div>
             <span class="wiz-task-name">${t}</span>
             <button class="wiz-task-del" onclick="removeWizardTask(${i})">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -4990,7 +4990,6 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     row.className = 'wiz-task-row';
     row.id = 'wizNewTaskRow';
     row.innerHTML = `
-      <div class="wiz-task-circle" style="flex-shrink:0;"></div>
       <input class="wiz-new-task-input" id="wizNewTaskInput" type="text" placeholder="Task name..." />
       <button onclick="confirmWizardTask()" style="background:linear-gradient(180deg,#4E2CC7,#3B1FA6);border:none;border-radius:8px;padding:5px 10px;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;">Add</button>`;
     list.appendChild(row);
