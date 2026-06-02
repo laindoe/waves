@@ -4969,8 +4969,11 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       <div class="wiz-step-sub">What needs to happen to move this current forward?</div>
       <div class="wiz-task-list" id="wizTaskList">
         ${wizardData.tasks.map((t, i) => `
-          <div class="wiz-task-row">
+          <div class="wiz-task-row" data-wiz-idx="${i}">
             <span class="wiz-task-name">${t}</span>
+            <button class="wiz-task-edit" onclick="editWizardTask(${i})">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
             <button class="wiz-task-del" onclick="removeWizardTask(${i})">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -5013,6 +5016,28 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   function removeWizardTask(index) {
     wizardData.tasks.splice(index, 1);
+    renderWizardTasksStep();
+  }
+
+  function editWizardTask(index) {
+    const row = document.querySelector(`.wiz-task-row[data-wiz-idx="${index}"]`);
+    if (!row) return;
+    const current = wizardData.tasks[index];
+    row.innerHTML = `
+      <input class="wiz-new-task-input" id="wizEditInput${index}" type="text" value="${current.replace(/"/g, '&quot;')}" style="flex:1;" />
+      <button onclick="saveWizardTask(${index})" style="background:linear-gradient(180deg,#4E2CC7,#3B1FA6);border:none;border-radius:8px;padding:5px 10px;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;">Save</button>`;
+    const input = document.getElementById(`wizEditInput${index}`);
+    if (input) {
+      input.focus();
+      input.select();
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') saveWizardTask(index); });
+    }
+  }
+
+  function saveWizardTask(index) {
+    const input = document.getElementById(`wizEditInput${index}`);
+    const val = input ? input.value.trim() : '';
+    if (val) wizardData.tasks[index] = val;
     renderWizardTasksStep();
   }
 
