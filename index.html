@@ -4754,8 +4754,46 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   function openAddToWaveModal(currentName, waveName, category) {
     wizardData = { currentName, wave: waveName, category, intent: '', tasks: [] };
     wizardStep = 0;
-    renderWizardStep();
     document.getElementById('addToWaveModal').classList.add('open');
+    const wave = DB_WAVES.find(w => w.name === waveName);
+    if (wave && wave.active === false) {
+      renderInactiveWavePrompt(wave);
+    } else {
+      renderWizardStep();
+    }
+  }
+
+  function renderInactiveWavePrompt(wave) {
+    const content = document.getElementById('wizStepContent');
+    const nav = document.getElementById('wizNav');
+    if (!content || !nav) return;
+    updateWizardDots(-1);
+    const waveColor = wave.color || '#3EC6D8';
+    content.innerHTML = `
+      <div style="text-align:center;padding:4px 0 20px;">
+        <svg width="36" height="24" viewBox="0 0 46 28" fill="none" style="margin-bottom:14px;">
+          <path d="M2 6 C6 2,10 2,14 6 C18 10,22 10,26 6 C29 3,32 2,38 6" stroke="${waveColor}" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M2 14 C6 10,10 10,14 14 C18 18,22 18,26 14 C29 11,32 10,38 14" stroke="${waveColor}" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M2 22 C6 18,10 18,14 22 C18 26,22 26,26 22 C29 19,32 18,38 22" stroke="${waveColor}" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+        <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:8px;">Wave is Inactive</div>
+        <div style="font-size:13px;color:#8A9BAA;line-height:1.6;"><strong style="color:#1E3A5F;">${wave.name}</strong> is currently inactive.<br>Do you want to turn it on?</div>
+      </div>
+    `;
+    nav.innerHTML = `
+      <button type="button" class="wiz-btn-back" onclick="proceedWizardInactive()" style="flex:1;font-size:12px;">Keep Inactive</button>
+      <button type="button" class="wiz-btn-next" style="flex:1;" onclick="activateWaveAndContinue('${wave.id}')">Activate Wave</button>
+    `;
+  }
+
+  function activateWaveAndContinue(waveId) {
+    const wave = DB_WAVES.find(w => w.id === waveId);
+    if (wave) { wave.active = true; save(); renderWavesAccordion(); renderOceanTabs(); }
+    renderWizardStep();
+  }
+
+  function proceedWizardInactive() {
+    renderWizardStep();
   }
 
   function closeWizard() {
