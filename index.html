@@ -4941,20 +4941,24 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     } else if (wizardStep === 3) {
       const count = wizardData.tasks.length;
+      const wave = DB_WAVES.find(w => w.name === wizardData.wave);
+      const waveColor = wave ? wave.color : '#3EC6D8';
       content.innerHTML = `
         <div class="wiz-step-label">STEP 4 OF 4</div>
         <div class="wiz-step-title">Ready to ride.</div>
-        <div class="wiz-step-sub">This current is about to go live in <strong>${wizardData.wave}</strong>.</div>
+        <div class="wiz-step-sub">Your <strong>${wizardData.currentName}</strong> current is now ready to go live.</div>
         <div class="wiz-task-count">
           <div class="wiz-task-count-num">${count}</div>
           <div class="wiz-task-count-label">${count === 1 ? 'task' : 'tasks'} loaded</div>
           <div class="wiz-task-count-sub">${count === 0 ? 'You can add tasks anytime from the current page.' : 'You can edit or add more from the current page.'}</div>
         </div>
         <div class="wiz-confirm-row">
-          <div class="wiz-confirm-icon">${getCategoryIcon(wizardData.category, 18)}</div>
+          <div class="wiz-confirm-icon">
+            <svg width="18" height="12" viewBox="0 0 26 14" fill="none"><path d="M1 7 C4 3, 8 3, 13 7 C18 11, 22 11, 25 7" stroke="${waveColor}" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </div>
           <div class="wiz-confirm-text">
             <div class="wiz-confirm-label">ACTIVATING IN</div>
-            <div class="wiz-confirm-value">${wizardData.wave} · ${wizardData.currentName}</div>
+            <div class="wiz-confirm-value">${wizardData.wave} · ${wizardData.category}</div>
           </div>
         </div>`;
       nav.innerHTML = `
