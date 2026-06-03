@@ -2718,20 +2718,22 @@
   }
 
   function todayStr() {
-    return new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function dateStr(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
 
   function getWeekBounds() {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const sunday = new Date(now);
-    sunday.setDate(now.getDate() - now.getDay()); // back to Sunday
+    sunday.setDate(now.getDate() - now.getDay());
     const saturday = new Date(sunday);
     saturday.setDate(sunday.getDate() + 6);
-    return {
-      start: sunday.toISOString().slice(0, 10),
-      end: saturday.toISOString().slice(0, 10)
-    };
+    return { start: dateStr(sunday), end: dateStr(saturday) };
   }
 
   function recordActivity() {
@@ -2774,14 +2776,14 @@
     const activity = JSON.parse(localStorage.getItem('waves_activity') || '{}');
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    const tStr = now.toISOString().slice(0, 10);
+    const tStr = dateStr(now);
     const yest = new Date(now); yest.setDate(yest.getDate() - 1);
-    const yStr = yest.toISOString().slice(0, 10);
+    const yStr = dateStr(yest);
     if (!activity[tStr] && !activity[yStr]) return 0;
     let cur = activity[tStr] ? new Date(now) : new Date(yest);
     let streak = 0;
     while (true) {
-      const d = cur.toISOString().slice(0, 10);
+      const d = dateStr(cur);
       if (!activity[d]) break;
       streak++;
       cur.setDate(cur.getDate() - 1);
