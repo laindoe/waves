@@ -4542,6 +4542,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     <button type="button" class="modal-save-btn" onclick="saveEditCurrent()">SAVE CHANGES</button>
 
+    <!-- Send to Ocean -->
+    <button type="button" onclick="sendCurrentToOcean()" style="width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(62,198,216,0.3);border-radius:14px;font-size:13px;font-weight:600;color:#3EC6D8;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">SEND BACK TO OCEAN</button>
+
     <!-- Delete -->
     <button type="button" onclick="confirmDeleteCurrent()" style="width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(220,60,60,0.2);border-radius:14px;font-size:13px;font-weight:600;color:rgba(200,50,50,0.5);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">DELETE CURRENT</button>
   </div>
@@ -4809,15 +4812,50 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     renderCurrentsList(DB_WAVES.find(w => w.id === current.waveId)?.name || '');
   }
 
-  function confirmDeleteCurrent() {
+  function sendCurrentToOcean() {
     if (!currentPageCurrentId) return;
     const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
     if (!current) return;
-    if (!confirm(`Remove "${current.name}" from active currents? It will move back to the Ocean.`)) return;
+    const btn = document.querySelector('#editCurrentModal button[onclick="sendCurrentToOcean()"]');
+    if (btn && btn.dataset.confirm !== 'true') {
+      btn.textContent = 'Are you sure?';
+      btn.style.color = '#2AAFC0';
+      btn.dataset.confirm = 'true';
+      setTimeout(() => {
+        if (btn) { btn.textContent = 'SEND BACK TO OCEAN'; btn.style.color = '#3EC6D8'; btn.dataset.confirm = ''; }
+      }, 3000);
+      return;
+    }
     current.active = false;
     save();
     closeEditCurrent();
     renderWavesAccordion();
+    renderCurrentsList(DB_WAVES.find(w => w.id === current.waveId)?.name || '');
+    renderTodayPage();
+    showPage('wave-detail');
+  }
+
+  function confirmDeleteCurrent() {
+    if (!currentPageCurrentId) return;
+    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
+    if (!current) return;
+    const btn = document.querySelector('#editCurrentModal button[onclick="confirmDeleteCurrent()"]');
+    if (btn && btn.dataset.confirm !== 'true') {
+      btn.textContent = 'ARE YOU SURE?';
+      btn.style.color = '#E05C5C';
+      btn.style.borderColor = 'rgba(224,92,92,0.4)';
+      btn.dataset.confirm = 'true';
+      setTimeout(() => {
+        if (btn) { btn.textContent = 'DELETE CURRENT'; btn.style.color = 'rgba(200,50,50,0.5)'; btn.style.borderColor = 'rgba(220,60,60,0.2)'; btn.dataset.confirm = ''; }
+      }, 3000);
+      return;
+    }
+    DB_TASKS = DB_TASKS.filter(t => t.currentId !== currentPageCurrentId);
+    DB_CURRENTS = DB_CURRENTS.filter(c => c.id !== currentPageCurrentId);
+    save();
+    closeEditCurrent();
+    renderWavesAccordion();
+    renderCurrentsList(DB_WAVES.find(w => w.id === current.waveId)?.name || '');
     renderTodayPage();
     showPage('wave-detail');
   }
