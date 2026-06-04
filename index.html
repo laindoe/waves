@@ -1477,7 +1477,7 @@
 
   <!-- HEADER: back arrow left, current name centered -->
   <header class="header" style="position:relative; justify-content:center;">
-    <button class="back-btn" onclick="showPage('wave-detail')" style="position:absolute;left:20px;">
+    <button class="back-btn" onclick="goBackFromCurrent()" style="position:absolute;left:20px;">
       <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9l8 8" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <button onclick="openEditCurrent()" style="position:absolute;right:20px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#3EC6D8;cursor:pointer;padding:0;">Edit</button>
@@ -3179,7 +3179,18 @@
     });
   }
 
+  let currentPageWaveName = null;
+
+  function goBackFromCurrent() {
+    if (currentPageWaveName) {
+      openWave(currentPageWaveName, wavePct(currentPageWaveName));
+    } else {
+      showPage('wave-detail');
+    }
+  }
+
   function openCurrent(waveName, currentName) {
+    currentPageWaveName = waveName;
     const current = getCurrentByName(waveName, currentName);
     currentPageCurrentId = current ? current.id : null;
     const headerName = document.getElementById('cp-header-name');
