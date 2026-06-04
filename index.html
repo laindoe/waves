@@ -1871,7 +1871,7 @@
       <div class="settings-card">
         <div class="settings-row" style="border:none;">
           <div class="settings-row-label">App data used</div>
-          <div id="storage-usage-display" style="font-size:14px;font-weight:600;color:#1E3A5F;font-family:'DM Sans',sans-serif;">—</div>
+          <div id="storage-usage-display" style="font-family:'DM Sans',sans-serif;text-align:right;">—</div>
         </div>
       </div>
     </div>
@@ -2794,20 +2794,26 @@
   function updateStorageDisplay() {
     const el = document.getElementById('storage-usage-display');
     if (!el) return;
-    let bytes = 0;
+    let usedBytes = 0;
     try {
       for (let k in localStorage) {
         if (Object.prototype.hasOwnProperty.call(localStorage, k)) {
-          bytes += (k.length + localStorage[k].length) * 2;
+          usedBytes += (k.length + localStorage[k].length) * 2;
         }
       }
     } catch (e) {}
-    if (bytes < 1024) {
-      el.textContent = bytes + ' B';
-    } else if (bytes < 1024 * 1024) {
-      el.textContent = (bytes / 1024).toFixed(1) + ' KB';
-    } else {
-      el.textContent = (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    function fmtBytes(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+      return (b / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+    el.innerHTML = '<span>' + fmtBytes(usedBytes) + ' used</span>';
+    if (navigator.storage && navigator.storage.estimate) {
+      navigator.storage.estimate().then(function(est) {
+        const free = Math.max(0, est.quota - est.usage);
+        el.innerHTML = '<div style="font-size:14px;font-weight:600;color:#1E3A5F;">' + fmtBytes(usedBytes) + ' used</div>'
+          + '<div style="font-size:11px;color:#8A9BAA;margin-top:2px;">' + fmtBytes(free) + ' available</div>';
+      }).catch(function() {});
     }
   }
 
