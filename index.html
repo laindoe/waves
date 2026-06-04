@@ -1837,10 +1837,17 @@
         </div>
         <div>
           <div class="settings-section-title">MOMENTUM</div>
-          <div class="settings-section-sub">Reset your streak if you need a fresh start.</div>
+          <div class="settings-section-sub">Track your progress and streak.</div>
         </div>
       </div>
       <div class="settings-card">
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Shores Reached</div>
+            <div style="font-size:11px;color:#8A9BAA;margin-top:2px;">Currents completed in full</div>
+          </div>
+          <div id="shoresReachedCount" style="font-size:28px;font-weight:700;color:#1E3A5F;font-family:'DM Sans',sans-serif;">0</div>
+        </div>
         <div class="settings-row" style="border:none;">
           <div class="settings-row-label">Day Streak</div>
           <div style="display:flex;gap:8px;">
@@ -1990,6 +1997,8 @@
     if (navBtn) navBtn.classList.add('active');
     if (id === 'settings' && typeof renderSettingsWaveList === 'function') {
       renderSettingsWaveList();
+      const shoresEl = document.getElementById('shoresReachedCount');
+      if (shoresEl) shoresEl.textContent = DB_CURRENTS.filter(c => c.archived).length;
     }
     if (id === 'today') renderTodayPage();
     document.body.style.overflow = '';
