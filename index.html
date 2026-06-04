@@ -2936,6 +2936,8 @@
     document.getElementById('celeb-count-label').textContent = tasks.length === 1 ? 'task completed' : 'tasks completed';
     modal.style.display = 'flex';
     startConfetti(wave ? wave.color : '#3EC6D8');
+    // Mark shore reached now — reversed if user taps Go Back
+    if (current) { current.reachedShore = true; save(); renderTodayPage(); }
   }
 
   function celebrationGoBack() {
@@ -2946,12 +2948,16 @@
       if (task) {
         task.done = false;
         task.completedAt = null;
-        save();
-        renderTasks();
-        renderWavesAccordion();
-        renderTodayPage();
       }
     }
+    if (_celebCurrentId) {
+      const current = DB_CURRENTS.find(c => c.id === _celebCurrentId);
+      if (current) current.reachedShore = false;
+    }
+    save();
+    renderTasks();
+    renderWavesAccordion();
+    renderTodayPage();
     _celebLastTaskId = null;
     _celebCurrentId = null;
   }
@@ -2964,7 +2970,6 @@
       if (current) {
         current.active = false;
         current.archived = true;
-        current.reachedShore = true;
         const wave = DB_WAVES.find(w => w.id === current.waveId);
         save();
         renderWavesAccordion();
