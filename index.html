@@ -2248,7 +2248,7 @@
           <div class="wa-curr-text" style="flex:1;">
             <div class="wa-curr-cat">${c.category}</div>
             <div class="wa-curr-name">${c.name}</div>
-            <div style="margin-top:5px;height:3px;background:rgba(30,58,95,0.1);border-radius:2px;"><div style="height:3px;background:${wave.color || '#3EC6D8'};border-radius:2px;width:${cPct}%;"></div></div>
+            <div style="margin-top:5px;display:flex;align-items:center;gap:6px;"><div style="flex:1;height:3px;background:rgba(30,58,95,0.1);border-radius:2px;"><div style="height:3px;background:${wave.color || '#3EC6D8'};border-radius:2px;width:${cPct}%;"></div></div><span style="font-size:10px;color:#8A9BAA;white-space:nowrap;">${cPct}%</span></div>
             <div style="font-size:10px;color:#8A9BAA;margin-top:2px;">${cDone} / ${cTasks.length} tasks</div>
           </div>
           <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>
@@ -2304,7 +2304,7 @@
               <div class="current-info" style="flex:1;">
                 <div class="current-cat">${c.category}</div>
                 <div class="current-name">${c.name}</div>
-                <div style="margin-top:7px;height:3px;background:rgba(30,58,95,0.1);border-radius:2px;"><div style="height:3px;background:${wave ? wave.color || '#3EC6D8' : '#3EC6D8'};border-radius:2px;width:${pct}%;"></div></div>
+                <div style="margin-top:7px;display:flex;align-items:center;gap:6px;"><div style="flex:1;height:3px;background:rgba(30,58,95,0.1);border-radius:2px;"><div style="height:3px;background:${wave ? wave.color || '#3EC6D8' : '#3EC6D8'};border-radius:2px;width:${pct}%;"></div></div><span style="font-size:11px;color:#8A9BAA;white-space:nowrap;">${pct}%</span></div>
                 <div style="font-size:11px;color:#8A9BAA;margin-top:3px;">${done} / ${tasks.length} tasks</div>
               </div>
               <svg style="flex-shrink:0;" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>
