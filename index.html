@@ -1396,17 +1396,17 @@
       <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9l8 8" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <span id="wd-header-name" style="font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;letter-spacing:0.04em;color:#1E3A5F;"></span>
+    <button onclick="openWaveCoverUpload()" style="position:absolute;right:20px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#3EC6D8;cursor:pointer;padding:0;">Edit</button>
   </header>
 
   <!-- WAVE COVER IMAGE -->
   <div style="padding:0 18px;">
-    <div id="wd-cover-wrap" style="border-radius:22px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);height:200px;background:#E8EDF2;position:relative;cursor:pointer;" onclick="openWaveCoverUpload()">
+    <div id="wd-cover-wrap" style="border-radius:22px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);height:200px;background:#E8EDF2;position:relative;" onclick="openWaveCoverUpload()">
       <img id="wd-cover-img" src="" style="width:100%;height:100%;object-fit:cover;display:none;" />
-      <div id="wd-cover-placeholder" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+      <div id="wd-cover-placeholder" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
         <div style="font-size:13px;color:#8A9BAA;font-family:'DM Sans',sans-serif;">Add cover image or GIF</div>
       </div>
-      <button onclick="event.stopPropagation();openWaveCoverUpload()" id="wd-cover-change-btn" style="display:none;position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.45);border:none;border-radius:8px;padding:6px 14px;color:white;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;">Change</button>
     </div>
     <input type="file" id="wdCoverInput" accept="image/*" style="display:none;" onchange="onWaveCoverSelected(event)" />
   </div>
@@ -3219,18 +3219,22 @@
   function updateWaveCoverDisplay(wave) {
     const img = document.getElementById('wd-cover-img');
     const placeholder = document.getElementById('wd-cover-placeholder');
-    const changeBtn = document.getElementById('wd-cover-change-btn');
     if (!img) return;
     if (wave && wave.headerImage) {
+      img.onload = () => {
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      };
       img.src = wave.headerImage;
-      img.style.display = 'block';
-      if (placeholder) placeholder.style.display = 'none';
-      if (changeBtn) changeBtn.style.display = 'block';
+      // If already cached/loaded, onload may not fire — show immediately
+      if (img.complete && img.naturalWidth) {
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      }
     } else {
       img.src = '';
       img.style.display = 'none';
       if (placeholder) placeholder.style.display = 'flex';
-      if (changeBtn) changeBtn.style.display = 'none';
     }
   }
 
@@ -3241,17 +3245,17 @@
   function onWaveCoverSelected(event) {
     const file = event.target.files[0];
     if (!file) return;
+    event.target.value = '';
     const reader = new FileReader();
     reader.onload = e => {
       const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
-      if (wave) {
-        wave.headerImage = e.target.result;
-        save();
-        updateWaveCoverDisplay(wave);
-      }
+      if (!wave) return;
+      wave.headerImage = e.target.result;
+      save();
+      // Use rAF to ensure the page is visible again after the file picker closed
+      requestAnimationFrame(() => updateWaveCoverDisplay(wave));
     };
     reader.readAsDataURL(file);
-    event.target.value = '';
   }
 
   // ── ACTIVATE CURRENT FROM WIZARD ──
