@@ -3240,7 +3240,7 @@
         req.onsuccess = e => res(e.target.result || null);
         req.onerror = () => res(null);
       });
-    } catch { return null; }
+    } catch(e) { return null; }
   }
 
   function updateWaveCoverDisplay(wave) {
