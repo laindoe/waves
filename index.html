@@ -3214,24 +3214,50 @@
     showPage('wave-detail');
   }
 
+  // ── COVER IMAGE STORAGE (IndexedDB — no size limit) ──
+  function _coverDB() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open('waves_covers', 1);
+      req.onupgradeneeded = e => e.target.result.createObjectStore('covers');
+      req.onsuccess = e => res(e.target.result);
+      req.onerror = rej;
+    });
+  }
+  async function saveCoverImage(key, dataUrl) {
+    const db = await _coverDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('covers', 'readwrite');
+      tx.objectStore('covers').put(dataUrl, key);
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  }
+  async function loadCoverImage(key) {
+    if (!key) return null;
+    try {
+      const db = await _coverDB();
+      return new Promise(res => {
+        const req = db.transaction('covers').objectStore('covers').get(key);
+        req.onsuccess = e => res(e.target.result || null);
+        req.onerror = () => res(null);
+      });
+    } catch { return null; }
+  }
+
   function updateWaveCoverDisplay(wave) {
     const img = document.getElementById('wd-cover-img');
     const placeholder = document.getElementById('wd-cover-placeholder');
     if (!img) return;
-    if (wave && wave.headerImage) {
-      img.onload = () => {
-        img.style.display = 'block';
-        if (placeholder) placeholder.style.display = 'none';
-      };
-      img.src = wave.headerImage;
-      // If already cached/loaded, onload may not fire — show immediately
-      if (img.complete && img.naturalWidth) {
-        img.style.display = 'block';
-        if (placeholder) placeholder.style.display = 'none';
-      }
+    const showImg = src => {
+      img.onerror = () => { img.style.display = 'none'; if (placeholder) placeholder.style.display = 'flex'; };
+      img.onload = () => { img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; };
+      img.src = src;
+    };
+    if (wave && wave.headerImageKey) {
+      loadCoverImage(wave.headerImageKey).then(dataUrl => { if (dataUrl) showImg(dataUrl); });
+    } else if (wave && wave.headerImage) {
+      showImg(wave.headerImage);
     } else {
-      img.src = '';
-      img.style.display = 'none';
+      img.src = ''; img.style.display = 'none';
       if (placeholder) placeholder.style.display = 'flex';
     }
   }
@@ -3244,47 +3270,36 @@
     const file = event.target.files[0];
     if (!file) return;
     event.target.value = '';
-
     const img = document.getElementById('wd-cover-img');
     const placeholder = document.getElementById('wd-cover-placeholder');
 
-    // Show instantly via blob URL
+    // Show instantly via blob URL (works for any format/size)
     const blobUrl = URL.createObjectURL(file);
     if (img) {
-      img.onerror = () => {
-        img.style.display = 'none';
-        if (placeholder) placeholder.style.display = 'flex';
-        URL.revokeObjectURL(blobUrl);
-      };
-      img.onload = () => {
-        img.style.display = 'block';
-        if (placeholder) placeholder.style.display = 'none';
-      };
+      img.onerror = () => { img.style.display = 'none'; if (placeholder) placeholder.style.display = 'flex'; URL.revokeObjectURL(blobUrl); };
+      img.onload = () => { img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; };
       img.src = blobUrl;
     }
 
-    // Persist as data URL — skip if file too large for localStorage (~2MB safe limit)
-    if (file.size > 2 * 1024 * 1024) {
-      // Keep blob URL for session; wave will lose image on refresh but at least it shows now
-      const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
-      if (wave) { wave.headerImage = blobUrl; }
-      return;
-    }
-
+    // Persist to IndexedDB (no size limit — handles large GIFs)
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = async e => {
       const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
       if (!wave) return;
+      const key = 'cover_' + wave.id;
       try {
-        wave.headerImage = e.target.result;
+        await saveCoverImage(key, e.target.result);
+        wave.headerImageKey = key;
+        delete wave.headerImage;
         save();
         URL.revokeObjectURL(blobUrl);
-        if (img && img.src === blobUrl) img.src = wave.headerImage;
+        if (img) { img.onload = null; img.src = e.target.result; }
       } catch (err) {
-        // Quota exceeded — keep blob URL in memory for the session
+        // IndexedDB failed — blob URL stays for session
       }
     };
     reader.readAsDataURL(file);
+  }
   }
 
   // ── ACTIVATE CURRENT FROM WIZARD ──
@@ -5484,9 +5499,14 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then(reg => {
-        // Check for SW updates every time the app comes to the foreground
+        // Check for SW updates when foregrounded, but at most once per 5 min
+        // (prevents file-picker visibility events from triggering rapid reloads)
+        let _lastSwCheck = 0;
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') reg.update();
+          if (document.visibilityState === 'visible') {
+            const now = Date.now();
+            if (now - _lastSwCheck > 5 * 60 * 1000) { _lastSwCheck = now; reg.update(); }
+          }
         });
       }).catch(() => {});
       // Auto-reload when a new SW takes control so updates appear immediately
