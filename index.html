@@ -2814,7 +2814,7 @@
 
   function calcShores() {
     const baseline = parseInt(localStorage.getItem('waves_shores_baseline') || '0', 10);
-    return Math.max(0, DB_CURRENTS.filter(c => c.archived).length - baseline);
+    return Math.max(0, DB_CURRENTS.filter(c => c.reachedShore).length - baseline);
   }
 
   function resetShores() {
@@ -2828,7 +2828,7 @@
       setTimeout(() => { if (btn) { btn.textContent = 'Reset'; btn.style.color = '#8A9BAA'; btn.style.borderColor = 'rgba(30,58,95,0.2)'; delete btn.dataset.confirm; } }, 3000);
       return;
     }
-    localStorage.setItem('waves_shores_baseline', DB_CURRENTS.filter(c => c.archived).length);
+    localStorage.setItem('waves_shores_baseline', DB_CURRENTS.filter(c => c.reachedShore).length);
     const el = document.getElementById('shoresReachedCount');
     if (el) el.textContent = '0';
     const mEl = document.getElementById('m-shores');
@@ -2964,6 +2964,7 @@
       if (current) {
         current.active = false;
         current.archived = true;
+        current.reachedShore = true;
         const wave = DB_WAVES.find(w => w.id === current.waveId);
         save();
         renderWavesAccordion();
