@@ -1854,17 +1854,14 @@
               onfocus="this.style.borderColor='#3EC6D8'" onblur="this.style.borderColor='rgba(30,58,95,0.15)'"/>
             <button onclick="saveApiKey()" style="padding:11px 18px;background:linear-gradient(180deg,#4E2CC7,#3B1FA6);border:none;border-radius:12px;color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">Save Key</button>
           </div>
-          <div style="font-size:11px;color:#8A9BAA;line-height:1.5;">Get a key at <a href="https://console.anthropic.com/settings/api-keys" target="_blank" style="color:#3EC6D8;text-decoration:none;">console.anthropic.com</a> → API Keys. Stored only on this device.</div>
+          <div style="font-size:11px;color:#8A9BAA;line-height:1.5;">Get a key at <a href="https://console.anthropic.com/settings/usage" target="_blank" style="color:#3EC6D8;text-decoration:none;">console.anthropic.com</a> → API Keys. Stored only on this device.</div>
         </div>
         <div class="settings-row" style="border-top:1px solid rgba(30,58,95,0.07);margin-top:4px;padding-top:14px;">
           <div>
             <div class="settings-row-label">Token Usage</div>
             <div style="font-size:11px;color:#8A9BAA;margin-top:2px;">Tracked in this app</div>
           </div>
-          <div style="text-align:right;">
-            <div id="token-usage-display" style="font-size:13px;font-weight:600;color:#1E3A5F;font-family:'DM Sans',sans-serif;">—</div>
-            <a href="https://console.anthropic.com/settings/usage" target="_blank" style="font-size:11px;color:#3EC6D8;text-decoration:none;">View console →</a>
-          </div>
+          <div id="token-usage-display" style="text-align:right;font-family:'DM Sans',sans-serif;">—</div>
         </div>
       </div>
     </div>
@@ -2856,12 +2853,17 @@
     if (!el) return;
     try {
       const raw = localStorage.getItem('waves_token_usage');
-      if (!raw) { el.textContent = '0 tokens'; return; }
+      if (!raw) { el.innerHTML = '<div style="font-size:13px;font-weight:600;color:#1E3A5F;">0 tokens</div>'; return; }
       const data = JSON.parse(raw);
-      const total = (data.input || 0) + (data.output || 0);
+      const input = data.input || 0;
+      const output = data.output || 0;
+      const total = input + output;
+      const cost = (input * 3 + output * 15) / 1_000_000;
       function fmtNum(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
-      el.textContent = fmtNum(total) + ' tokens · ' + (data.calls || 0) + ' calls';
-    } catch (e) { el.textContent = '—'; }
+      const costStr = cost < 0.01 ? '<$0.01' : '~$' + cost.toFixed(2);
+      el.innerHTML = '<div style="font-size:13px;font-weight:600;color:#1E3A5F;">' + fmtNum(total) + ' tokens</div>'
+        + '<div style="font-size:11px;color:#8A9BAA;margin-top:2px;">' + costStr + ' · ' + (data.calls || 0) + ' calls</div>';
+    } catch (e) { el.innerHTML = '—'; }
   }
 
   function updateStorageDisplay() {
