@@ -1987,6 +1987,7 @@
     if (id === 'settings' && typeof renderSettingsWaveList === 'function') {
       renderSettingsWaveList();
     }
+    if (id === 'today') renderTodayPage();
     document.body.style.overflow = '';
     window.scrollTo(0, 0);
     const page = document.getElementById('page-' + id);
@@ -2773,18 +2774,21 @@
   }
 
   function calcStreak() {
-    const activity = JSON.parse(localStorage.getItem('waves_activity') || '{}');
+    // Derive streak directly from task completion dates (source of truth)
+    const doneDates = new Set(
+      DB_TASKS.filter(t => t.done && t.completedAt).map(t => t.completedAt.slice(0, 10))
+    );
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const tStr = dateStr(now);
     const yest = new Date(now); yest.setDate(yest.getDate() - 1);
     const yStr = dateStr(yest);
-    if (!activity[tStr] && !activity[yStr]) return 0;
-    let cur = activity[tStr] ? new Date(now) : new Date(yest);
+    if (!doneDates.has(tStr) && !doneDates.has(yStr)) return 0;
+    let cur = doneDates.has(tStr) ? new Date(now) : new Date(yest);
     let streak = 0;
     while (true) {
       const d = dateStr(cur);
-      if (!activity[d]) break;
+      if (!doneDates.has(d)) break;
       streak++;
       cur.setDate(cur.getDate() - 1);
     }
