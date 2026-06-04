@@ -3246,14 +3246,26 @@
     const file = event.target.files[0];
     if (!file) return;
     event.target.value = '';
+
+    // Show instantly via blob URL — no async wait
+    const blobUrl = URL.createObjectURL(file);
+    const img = document.getElementById('wd-cover-img');
+    const placeholder = document.getElementById('wd-cover-placeholder');
+    if (img) {
+      img.src = blobUrl;
+      img.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+    }
+
+    // Persist as data URL in background
     const reader = new FileReader();
     reader.onload = e => {
       const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
       if (!wave) return;
       wave.headerImage = e.target.result;
       save();
-      // Use rAF to ensure the page is visible again after the file picker closed
-      requestAnimationFrame(() => updateWaveCoverDisplay(wave));
+      URL.revokeObjectURL(blobUrl);
+      if (img) img.src = wave.headerImage;
     };
     reader.readAsDataURL(file);
   }
