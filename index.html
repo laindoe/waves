@@ -187,7 +187,7 @@
 
   .momentum-stats-row {
     display: grid;
-    grid-template-columns: 1fr 1px 1fr;
+    grid-template-columns: 1fr 1px 1fr 1px 1fr;
     margin-bottom: 0;
   }
 
@@ -201,16 +201,17 @@
 
   .m-num {
     font-family: 'DM Sans', sans-serif;
-    font-size: 52px;
+    font-size: 40px;
     font-weight: 600;
     color: #3EC6D8;
     line-height: 1;
   }
 
   .m-label {
-    font-size: 13px;
+    font-size: 11px;
     color: #8A9BAA;
     font-weight: 400;
+    text-align: center;
   }
 
   .m-divider {
@@ -1343,6 +1344,11 @@
           <div class="m-num" id="m-streak">0</div>
           <div class="m-label">Day Streak</div>
         </div>
+        <div class="m-divider"></div>
+        <div class="m-stat">
+          <div class="m-num" id="m-shores">0</div>
+          <div class="m-label">Shores Reached</div>
+        </div>
       </div>
 
     </div>
@@ -2234,8 +2240,10 @@
     const weekDone = DB_TASKS.filter(t => t.done && t.completedAt >= start && t.completedAt <= end).length;
     const mDone = document.getElementById('m-tasks-done');
     const mStreak = document.getElementById('m-streak');
+    const mShores = document.getElementById('m-shores');
     if (mDone) mDone.textContent = weekDone;
     if (mStreak) mStreak.textContent = calcStreak();
+    if (mShores) mShores.textContent = DB_CURRENTS.filter(c => c.archived).length;
 
     // Render wave cards dynamically
     const list = document.getElementById('today-wave-list');
