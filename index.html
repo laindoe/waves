@@ -3347,20 +3347,54 @@
     showPage('wave-detail');
   }
 
+  // ── IndexedDB helpers for large cover images ──
+  var _idbDb = null;
+  function getIDB() {
+    if (_idbDb) return Promise.resolve(_idbDb);
+    return new Promise(function(resolve, reject) {
+      var req = indexedDB.open('waves_images', 1);
+      req.onupgradeneeded = function(e) { e.target.result.createObjectStore('images'); };
+      req.onsuccess = function(e) { _idbDb = e.target.result; resolve(_idbDb); };
+      req.onerror = function() { reject(req.error); };
+    });
+  }
+  function saveImageIDB(key, dataUrl) {
+    return getIDB().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction('images', 'readwrite');
+        tx.objectStore('images').put(dataUrl, key);
+        tx.oncomplete = function() { resolve(); };
+        tx.onerror = function() { reject(tx.error); };
+      });
+    });
+  }
+  function loadImageIDB(key) {
+    return getIDB().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction('images', 'readonly');
+        var req = tx.objectStore('images').get(key);
+        req.onsuccess = function() { resolve(req.result || null); };
+        req.onerror = function() { reject(req.error); };
+      });
+    });
+  }
+
   function updateWaveCoverDisplay(wave) {
     const img = document.getElementById('wd-cover-img');
     const placeholder = document.getElementById('wd-cover-placeholder');
     if (!img) return;
     if (wave && wave.headerImage) {
-      img.onload = () => {
-        img.style.display = 'block';
-        if (placeholder) placeholder.style.display = 'none';
-      };
-      img.src = wave.headerImage;
-      // If already cached/loaded, onload may not fire — show immediately
-      if (img.complete && img.naturalWidth) {
-        img.style.display = 'block';
-        if (placeholder) placeholder.style.display = 'none';
+      if (typeof wave.headerImage === 'string' && wave.headerImage.startsWith('idb:')) {
+        loadImageIDB(wave.headerImage.slice(4)).then(function(dataUrl) {
+          if (!dataUrl) { img.style.display = 'none'; if (placeholder) placeholder.style.display = 'flex'; return; }
+          img.onload = function() { img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; };
+          img.src = dataUrl;
+          if (img.complete && img.naturalWidth) { img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; }
+        }).catch(function(e) { img.style.display = 'none'; if (placeholder) placeholder.style.display = 'flex'; });
+      } else {
+        img.onload = function() { img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; };
+        img.src = wave.headerImage;
+        if (img.complete && img.naturalWidth) { img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; }
       }
     } else {
       img.src = '';
@@ -3379,9 +3413,18 @@
     _modalCoverBlobUrl = null;
     _modalCoverFile = null;
     if (wave && wave.headerImage) {
-      modalImg.src = wave.headerImage;
-      modalImg.style.display = 'block';
-      if (modalPlaceholder) modalPlaceholder.style.display = 'none';
+      if (typeof wave.headerImage === 'string' && wave.headerImage.startsWith('idb:')) {
+        loadImageIDB(wave.headerImage.slice(4)).then(function(dataUrl) {
+          if (!dataUrl) return;
+          modalImg.src = dataUrl;
+          modalImg.style.display = 'block';
+          if (modalPlaceholder) modalPlaceholder.style.display = 'none';
+        }).catch(function(e) {});
+      } else {
+        modalImg.src = wave.headerImage;
+        modalImg.style.display = 'block';
+        if (modalPlaceholder) modalPlaceholder.style.display = 'none';
+      }
     } else {
       modalImg.src = '';
       modalImg.style.display = 'none';
@@ -3405,8 +3448,8 @@
     _modalCoverBlobUrl = URL.createObjectURL(file);
     const modalImg = document.getElementById('modal-cover-img');
     const modalPlaceholder = document.getElementById('modal-cover-placeholder');
-    modalImg.onerror = () => { modalImg.style.display = 'none'; if (modalPlaceholder) modalPlaceholder.style.display = 'flex'; };
-    modalImg.onload = () => { modalImg.style.display = 'block'; if (modalPlaceholder) modalPlaceholder.style.display = 'none'; };
+    modalImg.onerror = function() { modalImg.style.display = 'none'; if (modalPlaceholder) modalPlaceholder.style.display = 'flex'; };
+    modalImg.onload = function() { modalImg.style.display = 'block'; if (modalPlaceholder) modalPlaceholder.style.display = 'none'; };
     modalImg.src = _modalCoverBlobUrl;
   }
 
@@ -3418,21 +3461,31 @@
     _modalCoverFile = null;
     _modalCoverBlobUrl = null;
     document.getElementById('wd-cover-modal').style.display = 'none';
-    // Show in banner immediately via blob URL while we read the file
     updateWaveCoverDisplay({ headerImage: blobUrl });
     const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        wave.headerImage = e.target.result;
+    reader.onload = function(e) {
+      const dataUrl = e.target.result;
+      if (file.size <= 2 * 1024 * 1024) {
+        try {
+          wave.headerImage = dataUrl;
+          save();
+          URL.revokeObjectURL(blobUrl);
+          updateWaveCoverDisplay(wave);
+          return;
+        } catch(err) {}
+      }
+      // Large file — save to IndexedDB
+      const idbKey = 'cover_' + wave.name;
+      saveImageIDB(idbKey, dataUrl).then(function() {
+        wave.headerImage = 'idb:' + idbKey;
         save();
         URL.revokeObjectURL(blobUrl);
         updateWaveCoverDisplay(wave);
-      } catch (err) {
-        // Quota exceeded — blob URL stays for the session
+      }).catch(function(err) {
         wave.headerImage = blobUrl;
-      }
+      });
     };
-    reader.onerror = () => { wave.headerImage = blobUrl; };
+    reader.onerror = function() { wave.headerImage = blobUrl; };
     reader.readAsDataURL(file);
   }
 
