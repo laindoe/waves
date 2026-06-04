@@ -1408,7 +1408,7 @@
         <div style="font-size:13px;color:#8A9BAA;font-family:'DM Sans',sans-serif;">Add cover image or GIF</div>
       </div>
     </div>
-    <input type="file" id="wdCoverInput" accept="image/*" style="display:none;" onchange="onWaveCoverSelected(event)" />
+    <input type="file" id="wdCoverInput" accept="image/*,.gif,image/gif" style="display:none;" onchange="onWaveCoverSelected(event)" />
   </div>
 
   <!-- ACTIVE CURRENTS -->
@@ -3247,25 +3247,44 @@
     if (!file) return;
     event.target.value = '';
 
-    // Show instantly via blob URL — no async wait
-    const blobUrl = URL.createObjectURL(file);
     const img = document.getElementById('wd-cover-img');
     const placeholder = document.getElementById('wd-cover-placeholder');
+
+    // Show instantly via blob URL
+    const blobUrl = URL.createObjectURL(file);
     if (img) {
+      img.onerror = () => {
+        img.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'flex';
+        URL.revokeObjectURL(blobUrl);
+      };
+      img.onload = () => {
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      };
       img.src = blobUrl;
-      img.style.display = 'block';
-      if (placeholder) placeholder.style.display = 'none';
     }
 
-    // Persist as data URL in background
+    // Persist as data URL — skip if file too large for localStorage (~2MB safe limit)
+    if (file.size > 2 * 1024 * 1024) {
+      // Keep blob URL for session; wave will lose image on refresh but at least it shows now
+      const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
+      if (wave) { wave.headerImage = blobUrl; }
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = e => {
       const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
       if (!wave) return;
-      wave.headerImage = e.target.result;
-      save();
-      URL.revokeObjectURL(blobUrl);
-      if (img) img.src = wave.headerImage;
+      try {
+        wave.headerImage = e.target.result;
+        save();
+        URL.revokeObjectURL(blobUrl);
+        if (img && img.src === blobUrl) img.src = wave.headerImage;
+      } catch (err) {
+        // Quota exceeded — keep blob URL in memory for the session
+      }
     };
     reader.readAsDataURL(file);
   }
