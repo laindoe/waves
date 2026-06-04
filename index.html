@@ -1244,14 +1244,18 @@
         <!-- SLIDE 1: Day + Astrology -->
         <div class="tide-slide active">
           <div class="tide-slide-inner">
-            <div class="ts1-day" id="ts1-day-label"></div>
+            <div class="ts1-day" id="ts1-day-label">SATURDAY</div>
             <div class="ts1-moon-row">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3EC6D8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <span class="ts1-moon-label" id="ts1-planet-label"></span>
-              <span class="ts1-signs" id="ts1-moon-signs"></span>
+              <span class="ts1-moon-label" id="ts1-planet-label">SATURN</span>
+              <span class="ts1-signs" id="ts1-moon-signs">Aquarius 11H · Aquarius 12H</span>
             </div>
-            <div class="ts1-theme-list" id="ts1-themes"></div>
-            <p class="ts1-body" id="ts1-body"></p>
+            <div class="ts1-theme-list" id="ts1-themes">
+              <div class="ts1-theme"><div class="ts1-dot"></div>emotional clarity</div>
+              <div class="ts1-theme"><div class="ts1-dot"></div>detachment</div>
+              <div class="ts1-theme"><div class="ts1-dot"></div>intuition</div>
+            </div>
+            <p class="ts1-body" id="ts1-body">Your Moon in Aquarius bridges both the 11th and 12th houses — you feel most like yourself when you're thinking, not reacting. Mondays activate your emotional intelligence, but it runs cool and analytical. You process through understanding, not expression. Give yourself space from noise today. Your best emotional reset is solitude with a good idea.</p>
           </div>
         </div>
 
@@ -3210,50 +3214,24 @@
     showPage('wave-detail');
   }
 
-  // ── COVER IMAGE STORAGE (IndexedDB — no size limit) ──
-  function _coverDB() {
-    return new Promise((res, rej) => {
-      const req = indexedDB.open('waves_covers', 1);
-      req.onupgradeneeded = e => e.target.result.createObjectStore('covers');
-      req.onsuccess = e => res(e.target.result);
-      req.onerror = rej;
-    });
-  }
-  async function saveCoverImage(key, dataUrl) {
-    const db = await _coverDB();
-    return new Promise((res, rej) => {
-      const tx = db.transaction('covers', 'readwrite');
-      tx.objectStore('covers').put(dataUrl, key);
-      tx.oncomplete = res; tx.onerror = rej;
-    });
-  }
-  async function loadCoverImage(key) {
-    if (!key) return null;
-    try {
-      const db = await _coverDB();
-      return new Promise(res => {
-        const req = db.transaction('covers').objectStore('covers').get(key);
-        req.onsuccess = e => res(e.target.result || null);
-        req.onerror = () => res(null);
-      });
-    } catch(e) { return null; }
-  }
-
   function updateWaveCoverDisplay(wave) {
     const img = document.getElementById('wd-cover-img');
     const placeholder = document.getElementById('wd-cover-placeholder');
     if (!img) return;
-    const showImg = src => {
-      img.onerror = () => { img.style.display = 'none'; if (placeholder) placeholder.style.display = 'flex'; };
-      img.onload = () => { img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; };
-      img.src = src;
-    };
-    if (wave && wave.headerImageKey) {
-      loadCoverImage(wave.headerImageKey).then(dataUrl => { if (dataUrl) showImg(dataUrl); });
-    } else if (wave && wave.headerImage) {
-      showImg(wave.headerImage);
+    if (wave && wave.headerImage) {
+      img.onload = () => {
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      };
+      img.src = wave.headerImage;
+      // If already cached/loaded, onload may not fire — show immediately
+      if (img.complete && img.naturalWidth) {
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      }
     } else {
-      img.src = ''; img.style.display = 'none';
+      img.src = '';
+      img.style.display = 'none';
       if (placeholder) placeholder.style.display = 'flex';
     }
   }
@@ -3266,36 +3244,47 @@
     const file = event.target.files[0];
     if (!file) return;
     event.target.value = '';
+
     const img = document.getElementById('wd-cover-img');
     const placeholder = document.getElementById('wd-cover-placeholder');
 
-    // Show instantly via blob URL (works for any format/size)
+    // Show instantly via blob URL
     const blobUrl = URL.createObjectURL(file);
     if (img) {
-      img.onerror = () => { img.style.display = 'none'; if (placeholder) placeholder.style.display = 'flex'; URL.revokeObjectURL(blobUrl); };
-      img.onload = () => { img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; };
+      img.onerror = () => {
+        img.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'flex';
+        URL.revokeObjectURL(blobUrl);
+      };
+      img.onload = () => {
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      };
       img.src = blobUrl;
     }
 
-    // Persist to IndexedDB (no size limit — handles large GIFs)
+    // Persist as data URL — skip if file too large for localStorage (~2MB safe limit)
+    if (file.size > 2 * 1024 * 1024) {
+      // Keep blob URL for session; wave will lose image on refresh but at least it shows now
+      const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
+      if (wave) { wave.headerImage = blobUrl; }
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = async e => {
+    reader.onload = e => {
       const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
       if (!wave) return;
-      const key = 'cover_' + wave.id;
       try {
-        await saveCoverImage(key, e.target.result);
-        wave.headerImageKey = key;
-        delete wave.headerImage;
+        wave.headerImage = e.target.result;
         save();
         URL.revokeObjectURL(blobUrl);
-        if (img) { img.onload = null; img.src = e.target.result; }
+        if (img && img.src === blobUrl) img.src = wave.headerImage;
       } catch (err) {
-        // IndexedDB failed — blob URL stays for session
+        // Quota exceeded — keep blob URL in memory for the session
       }
     };
     reader.readAsDataURL(file);
-  }
   }
 
   // ── ACTIVATE CURRENT FROM WIZARD ──
@@ -5495,14 +5484,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then(reg => {
-        // Check for SW updates when foregrounded, but at most once per 5 min
-        // (prevents file-picker visibility events from triggering rapid reloads)
-        let _lastSwCheck = 0;
+        // Check for SW updates every time the app comes to the foreground
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') {
-            const now = Date.now();
-            if (now - _lastSwCheck > 5 * 60 * 1000) { _lastSwCheck = now; reg.update(); }
-          }
+          if (document.visibilityState === 'visible') reg.update();
         });
       }).catch(() => {});
       // Auto-reload when a new SW takes control so updates appear immediately
