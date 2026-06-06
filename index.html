@@ -5701,21 +5701,21 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const btn = document.getElementById('updateCheckBtn');
     if (btn) { btn.textContent = 'Checking…'; btn.disabled = true; }
     if (!('serviceWorker' in navigator)) {
-      if (btn) { btn.textContent = 'Not supported'; btn.disabled = false; }
+      if (btn) { btn.textContent = 'Check for update'; btn.disabled = false; }
       return;
     }
     navigator.serviceWorker.getRegistration().then(function(reg) {
       if (!reg) { if (btn) { btn.textContent = 'Check for update'; btn.disabled = false; } return; }
-      reg.update().then(function() {
-        if (reg.waiting) {
-          // New SW already waiting — message it to skip waiting
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        } else {
-          if (btn) { btn.textContent = 'Up to date ✓'; btn.disabled = false; setTimeout(function() { if (btn) { btn.textContent = 'Check for update'; } }, 3000); }
+      // update() triggers install → skipWaiting → controllerchange → reload automatically.
+      // If no update exists, restore the button after 3s.
+      reg.update().catch(function() {});
+      setTimeout(function() {
+        if (btn) {
+          btn.textContent = 'Up to date ✓';
+          btn.disabled = false;
+          setTimeout(function() { if (btn) btn.textContent = 'Check for update'; }, 2000);
         }
-      }).catch(function() {
-        if (btn) { btn.textContent = 'Check for update'; btn.disabled = false; }
-      });
+      }, 3000);
     }).catch(function() {
       if (btn) { btn.textContent = 'Check for update'; btn.disabled = false; }
     });
