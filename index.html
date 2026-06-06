@@ -4261,7 +4261,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       <div style="display:flex;align-items:center;gap:12px;margin-top:14px;">
         <div id="editColorPreview" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;
           background:${editSelectedColor};border:2.5px solid rgba(30,58,95,0.15);"></div>
-        <span style="font-size:12px;color:#8A9BAA;font-family:'DM Sans',sans-serif;">Drag to choose any color</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${['#111111','#4A4A5A','#8A8A9A','#C0CDD5'].map(c => `
+            <div onclick="pickNeutral('${c}')" style="width:28px;height:28px;border-radius:50%;background:${c};cursor:pointer;
+              border:2.5px solid ${c === editSelectedColor ? '#1E3A5F' : 'transparent'};
+              box-shadow:0 1px 4px rgba(0,0,0,0.2);flex-shrink:0;"></div>`).join('')}
+        </div>
       </div>
     </div>`;
   }
@@ -4287,6 +4292,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     if (preview) preview.style.background = editSelectedColor;
   }
   function hueMouseMove(event) { if (_hueDragging) pickHue(event); }
+
+  function pickNeutral(color) {
+    editSelectedColor = color;
+    const preview = document.getElementById('editColorPreview');
+    if (preview) preview.style.background = color;
+    renderEditColors();
+  }
 
   function renderEditCategories() {
     document.getElementById('editWaveCategories').innerHTML = editCategories.map((cat, i) => `
