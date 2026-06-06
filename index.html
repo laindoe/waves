@@ -1273,7 +1273,7 @@
             <p style="font-size:13px;color:#3A5A6A;line-height:1.7;margin:0 0 14px;" id="ts2-body">Loading...</p>
             <div style="height:1px;background:rgba(30,58,95,0.07);margin-bottom:12px;"></div>
             <div style="font-size:10px;font-weight:600;letter-spacing:0.14em;color:#8A9BAA;margin-bottom:10px;">ENERGY KEYWORDS</div>
-            <div id="ts2-keywords" style="display:flex;flex-direction:column;gap:7px;"></div>
+            <div id="ts2-keywords"></div>
           </div>
         </div>
 
@@ -3744,11 +3744,17 @@
     if (signEl) signEl.textContent = "Tropical: " + tropSign + " " + tropDeg + "°  ·  Sidereal: " + sidSign + " " + sidDeg + "°";
     if (body) body.textContent = data.body;
     if (keywords) {
-      keywords.innerHTML = data.keywords.map(k => `
-        <div style="display:flex;align-items:center;gap:8px;">
+      const kws = data.keywords;
+      const half = Math.ceil(kws.length / 2);
+      const col = (list) => list.map(k => `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
           <div style="width:5px;height:5px;border-radius:50%;background:#3EC6D8;flex-shrink:0;"></div>
           <span style="font-size:12.5px;color:#1E3A5F;">${k}</span>
         </div>`).join("");
+      keywords.innerHTML = `<div style="display:flex;gap:0;width:100%;">
+        <div style="flex:1;">${col(kws.slice(0, half))}</div>
+        <div style="flex:1;">${col(kws.slice(half))}</div>
+      </div>`;
     }
   }
 
