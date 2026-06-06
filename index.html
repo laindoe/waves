@@ -5160,8 +5160,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     current.waveId = newWaveId;
     current.category = newCat;
     save();
+    renderWavesAccordion();
+    renderTodayPage();
     closeEditCurrent();
-    // Navigate back to the destination wave
     openWave(destWave.name, 0);
   }
 
