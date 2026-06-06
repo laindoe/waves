@@ -1874,9 +1874,13 @@
         </div>
       </div>
       <div class="settings-card">
-        <div class="settings-row" style="border:none;">
+        <div class="settings-row">
           <div class="settings-row-label">App data used</div>
           <div id="storage-usage-display" style="font-family:'DM Sans',sans-serif;text-align:right;">—</div>
+        </div>
+        <div class="settings-row" style="border:none;">
+          <div class="settings-row-label">App version</div>
+          <button onclick="checkForAppUpdate()" id="updateCheckBtn" style="padding:8px 16px;background:none;border:1.5px solid rgba(62,198,216,0.3);border-radius:10px;font-size:12px;font-weight:600;color:#3EC6D8;cursor:pointer;font-family:'DM Sans',sans-serif;">Check for update</button>
         </div>
       </div>
     </div>
@@ -5686,6 +5690,30 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 <script>
   // Initial avatar render (after all scripts loaded)
   renderAllAvatars();
+
+  function checkForAppUpdate() {
+    const btn = document.getElementById('updateCheckBtn');
+    if (btn) { btn.textContent = 'Checking…'; btn.disabled = true; }
+    if (!('serviceWorker' in navigator)) {
+      if (btn) { btn.textContent = 'Not supported'; btn.disabled = false; }
+      return;
+    }
+    navigator.serviceWorker.getRegistration().then(function(reg) {
+      if (!reg) { if (btn) { btn.textContent = 'Check for update'; btn.disabled = false; } return; }
+      reg.update().then(function() {
+        if (reg.waiting) {
+          // New SW already waiting — message it to skip waiting
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+          if (btn) { btn.textContent = 'Up to date ✓'; btn.disabled = false; setTimeout(function() { if (btn) { btn.textContent = 'Check for update'; } }, 3000); }
+        }
+      }).catch(function() {
+        if (btn) { btn.textContent = 'Check for update'; btn.disabled = false; }
+      });
+    }).catch(function() {
+      if (btn) { btn.textContent = 'Check for update'; btn.disabled = false; }
+    });
+  }
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
