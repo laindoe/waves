@@ -4951,6 +4951,16 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     <button type="button" class="modal-save-btn" onclick="saveEditCurrent()">SAVE CHANGES</button>
 
+    <!-- Transfer to Wave -->
+    <button type="button" onclick="toggleTransferSection()" id="transferToggleBtn" style="width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(30,58,95,0.15);border-radius:14px;font-size:13px;font-weight:600;color:#1E3A5F;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">TRANSFER TO WAVE</button>
+    <div id="transferSection" style="display:none;margin-top:10px;padding:14px;background:rgba(30,58,95,0.04);border-radius:14px;">
+      <div class="modal-field-label" style="margin-bottom:6px;">DESTINATION WAVE</div>
+      <select id="transferWaveSelect" class="modal-input" onchange="onTransferWaveChange()" style="margin-bottom:12px;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A9BAA' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;"></select>
+      <div class="modal-field-label" style="margin-bottom:6px;">ASSIGN TO CATEGORY</div>
+      <select id="transferCatSelect" class="modal-input" style="margin-bottom:14px;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A9BAA' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;"></select>
+      <button type="button" onclick="confirmTransfer()" style="width:100%;padding:12px;background:linear-gradient(180deg,#4E2CC7,#3B1FA6);border:none;border-radius:12px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">CONFIRM TRANSFER</button>
+    </div>
+
     <!-- Send to Ocean -->
     <button type="button" onclick="sendCurrentToOcean()" style="width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(62,198,216,0.3);border-radius:14px;font-size:13px;font-weight:600;color:#3EC6D8;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">SEND BACK TO OCEAN</button>
 
@@ -5107,8 +5117,53 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     if (card) card.scrollTop = 0;
   }
 
-  function closeEditCurrent() { document.getElementById('editCurrentModal').classList.remove('open'); }
+  function closeEditCurrent() {
+    document.getElementById('editCurrentModal').classList.remove('open');
+    document.getElementById('transferSection').style.display = 'none';
+  }
   function closeEditCurrentModal(e) { if (e.target === document.getElementById('editCurrentModal')) closeEditCurrent(); }
+
+  function toggleTransferSection() {
+    const sec = document.getElementById('transferSection');
+    const visible = sec.style.display === 'block';
+    sec.style.display = visible ? 'none' : 'block';
+    if (!visible) populateTransferWaves();
+  }
+
+  function populateTransferWaves() {
+    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
+    if (!current) return;
+    const waveSelect = document.getElementById('transferWaveSelect');
+    const otherWaves = DB_WAVES.filter(w => w.id !== current.waveId);
+    waveSelect.innerHTML = otherWaves.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+    populateTransferCats();
+  }
+
+  function onTransferWaveChange() { populateTransferCats(); }
+
+  function populateTransferCats() {
+    const waveSelect = document.getElementById('transferWaveSelect');
+    const catSelect = document.getElementById('transferCatSelect');
+    const wave = DB_WAVES.find(w => w.id === waveSelect.value);
+    if (!wave) return;
+    const cats = wave.categories && wave.categories.length ? wave.categories : ['General'];
+    catSelect.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  function confirmTransfer() {
+    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
+    if (!current) return;
+    const newWaveId = document.getElementById('transferWaveSelect').value;
+    const newCat = document.getElementById('transferCatSelect').value;
+    const destWave = DB_WAVES.find(w => w.id === newWaveId);
+    if (!destWave) return;
+    current.waveId = newWaveId;
+    current.category = newCat;
+    save();
+    closeEditCurrent();
+    // Navigate back to the destination wave
+    openWave(destWave.name, 0);
+  }
 
   function updateEcIconPreview(current) {
     const preview = document.getElementById('ec-icon-preview');
