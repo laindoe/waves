@@ -1816,6 +1816,13 @@
           </div>
         </div>
         <div id="shoresDebugOut" style="display:none;padding:12px;background:#f5f8fa;border-radius:10px;margin:0 0 12px;font-size:11px;font-family:monospace;color:#1E3A5F;line-height:1.8;"></div>
+        <div class="settings-row">
+          <div class="settings-row-label">Tasks Done</div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="debugTasksWeekly()" style="padding:8px 16px;background:none;border:1.5px solid rgba(62,198,216,0.3);border-radius:10px;font-size:12px;font-weight:600;color:#3EC6D8;cursor:pointer;font-family:'DM Sans',sans-serif;">Weeks</button>
+          </div>
+        </div>
+        <div id="tasksWeeklyOut" style="display:none;padding:12px;background:#f5f8fa;border-radius:10px;margin:0 0 12px;font-size:11px;font-family:monospace;color:#1E3A5F;line-height:1.8;"></div>
         <div class="settings-row" style="border:none;">
           <div class="settings-row-label">Day Streak</div>
           <div style="display:flex;gap:8px;">
@@ -2751,6 +2758,42 @@
     const d = todayStr();
     activity[d] = (activity[d] || 0) + 1;
     localStorage.setItem(key, JSON.stringify(activity));
+  }
+
+  function debugTasksWeekly() {
+    const out = document.getElementById('tasksWeeklyOut');
+    if (!out) return;
+    if (out.style.display === 'block') { out.style.display = 'none'; return; }
+    // Group all completed dated tasks by their Sun–Sat week
+    const doneTasks = DB_TASKS.filter(t => t.done && t.completedAt);
+    if (!doneTasks.length) { out.innerHTML = '<div style="color:#8A9BAA;">No completed tasks recorded yet.</div>'; out.style.display = 'block'; return; }
+    // Find the Sunday of a given date string
+    function weekSunday(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      d.setDate(d.getDate() - d.getDay());
+      return d;
+    }
+    function fmt(d) {
+      return (d.getMonth()+1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(2);
+    }
+    const byWeek = {};
+    doneTasks.forEach(t => {
+      const sun = weekSunday(t.completedAt.slice(0,10));
+      const sat = new Date(sun); sat.setDate(sun.getDate() + 6);
+      const key = dateStr(sun);
+      if (!byWeek[key]) byWeek[key] = { sun, sat, count: 0 };
+      byWeek[key].count++;
+    });
+    const rows = Object.keys(byWeek).sort().reverse().map(k => {
+      const { sun, sat, count } = byWeek[k];
+      const isCurrent = k === dateStr(weekSunday(new Date().toISOString().slice(0,10)));
+      return `<div style="display:flex;justify-content:space-between;padding:3px 0;${isCurrent ? 'font-weight:700;' : ''}">
+        <span>${fmt(sun)} – ${fmt(sat)}${isCurrent ? ' (this week)' : ''}</span>
+        <span>${count} task${count !== 1 ? 's' : ''}</span>
+      </div>`;
+    }).join('');
+    out.innerHTML = rows;
+    out.style.display = 'block';
   }
 
   function debugShores() {
