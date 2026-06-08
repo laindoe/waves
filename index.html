@@ -4855,7 +4855,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         // Access data from main script globals
         if (typeof DB_CURRENTS === 'undefined' || typeof DB_TASKS === 'undefined') return;
 
-        var activeCurrents = DB_CURRENTS.filter(function(c) { return c.active; });
+        var activeWaveIds = DB_WAVES.filter(function(w) { return w.active !== false; }).map(function(w) { return w.id; });
+        var activeCurrents = DB_CURRENTS.filter(function(c) { return c.active && !c.archived && !c.reachedShore && activeWaveIds.indexOf(c.waveId) !== -1; });
         if (!activeCurrents.length) return;
 
         var scored = activeCurrents.map(function(c) {
