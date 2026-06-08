@@ -3783,16 +3783,15 @@
     if (body) body.textContent = data.body;
     if (keywords) {
       const kws = data.keywords;
-      const third = Math.ceil(kws.length / 3);
+      const half = Math.ceil(kws.length / 2);
       const col = (list) => list.map(k => `
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">
           <div style="width:5px;height:5px;border-radius:50%;background:#3EC6D8;flex-shrink:0;"></div>
           <span style="font-size:14px;color:#1E3A5F;">${k}</span>
         </div>`).join("");
       keywords.innerHTML = `<div style="display:flex;gap:0;width:100%;">
-        <div style="flex:1;">${col(kws.slice(0, third))}</div>
-        <div style="flex:1;">${col(kws.slice(third, third * 2))}</div>
-        <div style="flex:1;">${col(kws.slice(third * 2))}</div>
+        <div style="flex:1;">${col(kws.slice(0, half))}</div>
+        <div style="flex:1;">${col(kws.slice(half))}</div>
       </div>`;
     }
   }
