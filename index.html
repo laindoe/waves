@@ -26,10 +26,13 @@
     padding-top: env(safe-area-inset-top);
     font-family: 'DM Sans', sans-serif;
     background: linear-gradient(160deg, #dde8f5 0%, #e4eaf5 30%, #d8eaf0 60%, #cce6ee 100%);
+    display: flex;
+    justify-content: center;
   }
 
   .phone {
-    width: 100%;
+    width: 390px;
+    max-width: 100%;
     min-height: 100vh;
     background: transparent;
     padding-bottom: calc(60px + env(safe-area-inset-bottom));
@@ -301,7 +304,7 @@
   /* ── BOTTOM NAV ── */
   .bottom-nav {
     position: fixed;
-    bottom: 0; left: 0; right: 0;
+    bottom: 0; left: 50%; transform: translateX(-50%); width: min(390px, 100%);
     background: linear-gradient(to bottom, rgba(204,230,238,0) 0%, #cce6ee 28px);
     border-top: none;
     padding: 10px 0 calc(8px + env(safe-area-inset-bottom));
