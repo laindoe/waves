@@ -241,7 +241,7 @@
   }
 
   .wave-circle {
-    width: 44px; height: 44px;
+    width: 54px; height: 54px;
     border-radius: 50%;
     border: 2px solid rgba(62,198,216,0.7);
     background: rgba(62,198,216,0.15);
@@ -252,7 +252,7 @@
   .wave-info { flex: 1; min-width: 0; }
 
   .wave-name {
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 600;
     color: #1A3A4A;
     margin-bottom: 3px;
@@ -2250,7 +2250,7 @@
       list.innerHTML = activeWaves.map(wave => {
         const iconHtml = wave.logo
           ? `<img src="${wave.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`
-          : `<span style="font-size:22px;line-height:1;">${wave.icon || '〜'}</span>`;
+          : `<span style="font-size:26px;line-height:1;">${wave.icon || '〜'}</span>`;
         return `
           <div class="wave-card" data-wave-id="${wave.id}" onclick="openWave('${wave.name}')" style="cursor:pointer;">
             <div class="wave-circle" style="border-color:${wave.color || '#3EC6D8'};overflow:hidden;">${iconHtml}</div>
