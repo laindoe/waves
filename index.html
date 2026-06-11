@@ -4360,6 +4360,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function initCatDrag(container) {
+    if (container._catDragAbort) container._catDragAbort.abort();
+    const ac = new AbortController();
+    container._catDragAbort = ac;
     let dragging = null, clone = null, placeholder = null, cloneOffsetY = 0;
     container.addEventListener('touchstart', function(e) {
       const handle = e.target.closest('.ew-cat-drag');
@@ -4377,7 +4380,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       clone = dragging.cloneNode(true);
       clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;z-index:9999;opacity:0.96;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.15);border-radius:12px;background:white;display:flex;align-items:center;gap:10px;padding:10px 14px;';
       document.body.appendChild(clone);
-    }, { passive: false });
+    }, { passive: false, signal: ac.signal });
     container.addEventListener('touchmove', function(e) {
       if (!dragging) return;
       e.preventDefault();
@@ -4393,7 +4396,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         if (touch.clientY < r.top + r.height / 2) container.insertBefore(placeholder, row);
         else container.insertBefore(placeholder, row.nextSibling);
       }
-    }, { passive: false });
+    }, { passive: false, signal: ac.signal });
     container.addEventListener('touchend', function() {
       if (!dragging) return;
       container.insertBefore(dragging, placeholder);
@@ -4404,8 +4407,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         return r.querySelector('.ew-cat-name').textContent.trim();
       });
       dragging = null; clone = null; placeholder = null;
-      renderEditCategories();
-    }, { passive: false });
+    }, { passive: false, signal: ac.signal });
   }
 
   function selectWaveIcon(icon) {
@@ -4492,6 +4494,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     renderTodayPage();
     renderOceanTabs();
     renderOceanContent();
+    if (currentWaveDetailName && editingWaveId) {
+      const updatedWave = DB_WAVES.find(w => w.id === editingWaveId);
+      if (updatedWave && updatedWave.name === currentWaveDetailName) {
+        renderCurrentsList(currentWaveDetailName);
+      }
+    }
   }
 
   function confirmDeleteWave() {
