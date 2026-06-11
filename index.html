@@ -5366,30 +5366,36 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function saveEditCurrent() {
-    if (!currentPageCurrentId) return;
-    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
-    if (!current) return;
+    try {
+      if (!currentPageCurrentId) { alert('Debug: no currentPageCurrentId'); return; }
+      const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
+      if (!current) { alert('Debug: current not found for id=' + currentPageCurrentId); return; }
 
-    const newName = document.getElementById('ec-name').value.trim();
-    const newCat  = document.getElementById('ec-category').value.trim().toUpperCase();
-    if (!newName) { document.getElementById('ec-name').focus(); return; }
+      const nameEl = document.getElementById('ec-name');
+      const catEl  = document.getElementById('ec-category');
+      if (!nameEl) { alert('Debug: ec-name element missing'); return; }
+      const newName = nameEl.value.trim();
+      const newCat  = catEl ? catEl.value.trim().toUpperCase() : current.category;
+      if (!newName) { nameEl.focus(); return; }
 
-    current.name     = newName;
-    current.category = newCat;
-    current.logo     = ecLogoDataUrl || null;
-    current.emoji    = ecEmoji    || null;
-    current.iconKey  = ecIconKey  || null;
-    current.iconSvg  = ecIconSvg  || null;
-    save();
+      current.name     = newName;
+      current.category = newCat;
+      current.logo     = ecLogoDataUrl || null;
+      current.emoji    = ecEmoji    || null;
+      current.iconKey  = ecIconKey  || null;
+      current.iconSvg  = ecIconSvg  || null;
+      save();
 
-    // Update header
-    const headerName = document.getElementById('cp-header-name');
-    if (headerName) headerName.textContent = newName;
+      const headerName = document.getElementById('cp-header-name');
+      if (headerName) headerName.textContent = newName;
 
-    closeEditCurrent();
-    renderWavesAccordion();
-    renderTodayPage();
-    renderCurrentsList(DB_WAVES.find(w => w.id === current.waveId)?.name || '');
+      closeEditCurrent();
+      renderWavesAccordion();
+      renderTodayPage();
+      renderCurrentsList(DB_WAVES.find(w => w.id === current.waveId)?.name || '');
+    } catch(e) {
+      alert('Save error: ' + e.message);
+    }
   }
 
   function sendCurrentToOcean() {
