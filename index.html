@@ -2186,10 +2186,26 @@
   }
 
   function saveData(waves, currents, tasks) {
-    localStorage.setItem('waves_version',  DATA_VERSION);
-    localStorage.setItem('waves_data',    JSON.stringify(waves));
-    localStorage.setItem('currents_data', JSON.stringify(currents));
-    localStorage.setItem('tasks_data',    JSON.stringify(tasks));
+    const write = (w, c, t) => {
+      localStorage.setItem('waves_version',  DATA_VERSION);
+      localStorage.setItem('waves_data',    JSON.stringify(w));
+      localStorage.setItem('currents_data', JSON.stringify(c));
+      localStorage.setItem('tasks_data',    JSON.stringify(t));
+    };
+    try {
+      write(waves, currents, tasks);
+    } catch(e) {
+      if (e.name !== 'QuotaExceededError' && e.code !== 22) throw e;
+      // Strip base64 logos to reclaim space, then retry
+      const slim = o => { if (!o.logo || !o.logo.startsWith('data:')) return o; const c = Object.assign({}, o); c.logo = null; return c; };
+      try {
+        write(waves.map(slim), currents.map(slim), tasks);
+      } catch(e2) {
+        // Still failing — also drop old completed tasks (>30 days)
+        const cutoff = Date.now() - 30 * 864e5;
+        write(waves.map(slim), currents.map(slim), tasks.filter(t => !t.done || !t.completedAt || new Date(t.completedAt).getTime() > cutoff));
+      }
+    }
   }
 
   let { waves: DB_WAVES, currents: DB_CURRENTS, tasks: DB_TASKS } = loadData();
@@ -5366,36 +5382,32 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function saveEditCurrent() {
-    try {
-      if (!currentPageCurrentId) { alert('Debug: no currentPageCurrentId'); return; }
-      const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
-      if (!current) { alert('Debug: current not found for id=' + currentPageCurrentId); return; }
+    if (!currentPageCurrentId) return;
+    const current = DB_CURRENTS.find(c => c.id === currentPageCurrentId);
+    if (!current) return;
 
-      const nameEl = document.getElementById('ec-name');
-      const catEl  = document.getElementById('ec-category');
-      if (!nameEl) { alert('Debug: ec-name element missing'); return; }
-      const newName = nameEl.value.trim();
-      const newCat  = catEl ? catEl.value.trim().toUpperCase() : current.category;
-      if (!newName) { nameEl.focus(); return; }
+    const nameEl = document.getElementById('ec-name');
+    const catEl  = document.getElementById('ec-category');
+    if (!nameEl) return;
+    const newName = nameEl.value.trim();
+    const newCat  = catEl ? catEl.value.trim().toUpperCase() : current.category;
+    if (!newName) { nameEl.focus(); return; }
 
-      current.name     = newName;
-      current.category = newCat;
-      current.logo     = ecLogoDataUrl || null;
-      current.emoji    = ecEmoji    || null;
-      current.iconKey  = ecIconKey  || null;
-      current.iconSvg  = ecIconSvg  || null;
-      save();
+    current.name     = newName;
+    current.category = newCat;
+    current.logo     = ecLogoDataUrl || null;
+    current.emoji    = ecEmoji    || null;
+    current.iconKey  = ecIconKey  || null;
+    current.iconSvg  = ecIconSvg  || null;
+    save();
 
-      const headerName = document.getElementById('cp-header-name');
-      if (headerName) headerName.textContent = newName;
+    const headerName = document.getElementById('cp-header-name');
+    if (headerName) headerName.textContent = newName;
 
-      closeEditCurrent();
-      renderWavesAccordion();
-      renderTodayPage();
-      renderCurrentsList(DB_WAVES.find(w => w.id === current.waveId)?.name || '');
-    } catch(e) {
-      alert('Save error: ' + e.message);
-    }
+    closeEditCurrent();
+    renderWavesAccordion();
+    renderTodayPage();
+    renderCurrentsList(DB_WAVES.find(w => w.id === current.waveId)?.name || '');
   }
 
   function sendCurrentToOcean() {
