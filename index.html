@@ -4150,6 +4150,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
   .ew-cat-name { flex: 1; font-size: 16px; font-weight: 600; color: #1E3A5F; letter-spacing: 0.06em; }
   .ew-cat-del { background: none; border: none; cursor: pointer; padding: 4px; color: #C0CDD5; }
+  .ew-cat-drag { color: #C0CDD5; cursor: grab; flex-shrink: 0; padding: 4px; touch-action: none; }
 </style>
 
 <script>
@@ -4231,10 +4232,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     editSelectedColor = wave?.color || '#3EC6D8';
     editLogoDataUrl   = wave?.logo  || null;
 
-    // Categories from existing currents for this wave
+    // Categories: merge saved order + any from currents not already listed
     if (wave) {
-      const cats = [...new Set(DB_CURRENTS.filter(c => c.waveId === wave.id).map(c => c.category))];
-      editCategories = cats.length ? cats : (wave.categories || []);
+      const fromWave = wave.categories || [];
+      const fromCurrents = [...new Set(DB_CURRENTS.filter(c => c.waveId === wave.id && !c.archived).map(c => c.category))];
+      const merged = [...fromWave];
+      fromCurrents.forEach(c => { if (!merged.includes(c)) merged.push(c); });
+      editCategories = merged.length ? merged : ['PRODUCTS','CONTENT','IN PERSON'];
     } else {
       editCategories = ['PRODUCTS','CONTENT','IN PERSON'];
     }
@@ -4340,14 +4344,68 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function renderEditCategories() {
-    document.getElementById('editWaveCategories').innerHTML = editCategories.map((cat, i) => `
-      <div class="ew-cat-row">
+    const container = document.getElementById('editWaveCategories');
+    container.innerHTML = editCategories.map((cat, i) => `
+      <div class="ew-cat-row" data-cat-index="${i}">
+        <span class="ew-cat-drag">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="16" x2="21" y2="16"/></svg>
+        </span>
         <span class="ew-cat-name">${cat}</span>
         <button class="ew-cat-del" onclick="removeEditCategory(${i})">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
     `).join('');
+    initCatDrag(container);
+  }
+
+  function initCatDrag(container) {
+    let dragging = null, clone = null, placeholder = null, cloneOffsetY = 0;
+    container.addEventListener('touchstart', function(e) {
+      const handle = e.target.closest('.ew-cat-drag');
+      if (!handle) return;
+      e.preventDefault();
+      dragging = handle.closest('.ew-cat-row');
+      if (!dragging) return;
+      const touch = e.touches[0];
+      const rect = dragging.getBoundingClientRect();
+      cloneOffsetY = touch.clientY - rect.top;
+      placeholder = document.createElement('div');
+      placeholder.style.cssText = 'height:' + rect.height + 'px;border-radius:12px;background:rgba(62,198,216,0.08);margin-bottom:8px;border:1.5px dashed rgba(62,198,216,0.3);';
+      container.insertBefore(placeholder, dragging);
+      dragging.style.opacity = '0.3';
+      clone = dragging.cloneNode(true);
+      clone.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;z-index:9999;opacity:0.96;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.15);border-radius:12px;background:white;display:flex;align-items:center;gap:10px;padding:10px 14px;';
+      document.body.appendChild(clone);
+    }, { passive: false });
+    container.addEventListener('touchmove', function(e) {
+      if (!dragging) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      clone.style.top = (touch.clientY - cloneOffsetY) + 'px';
+      clone.style.display = 'none';
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      clone.style.display = '';
+      if (!el) return;
+      const row = el.closest('.ew-cat-row');
+      if (row && row !== dragging && row.closest('#editWaveCategories') === container) {
+        const r = row.getBoundingClientRect();
+        if (touch.clientY < r.top + r.height / 2) container.insertBefore(placeholder, row);
+        else container.insertBefore(placeholder, row.nextSibling);
+      }
+    }, { passive: false });
+    container.addEventListener('touchend', function() {
+      if (!dragging) return;
+      container.insertBefore(dragging, placeholder);
+      dragging.style.opacity = '';
+      placeholder.remove();
+      clone.remove();
+      editCategories = Array.from(container.querySelectorAll('.ew-cat-row')).map(function(r) {
+        return r.querySelector('.ew-cat-name').textContent.trim();
+      });
+      dragging = null; clone = null; placeholder = null;
+      renderEditCategories();
+    }, { passive: false });
   }
 
   function selectWaveIcon(icon) {
@@ -4409,6 +4467,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           DB_TASKS = DB_TASKS.filter(t => !removedIds.has(t.currentId));
           DB_CURRENTS = DB_CURRENTS.filter(c => !removedIds.has(c.id));
         }
+        // Create a default current for each newly added category
+        const existingCats = new Set(DB_CURRENTS.filter(c => c.waveId === wave.id).map(c => c.category));
+        editCategories.forEach(cat => {
+          if (!existingCats.has(cat)) {
+            DB_CURRENTS.push({ id: 'c' + Date.now() + Math.random(), waveId: wave.id, name: 'New Current', category: cat, active: false });
+          }
+        });
       }
     } else {
       // New wave
