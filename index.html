@@ -3450,13 +3450,41 @@
   }
 
   let currentPageWaveName = null;
+  var _currentFromDestId = null;
 
   function goBackFromCurrent() {
-    if (currentPageWaveName) {
+    if (_currentFromDestId) {
+      const destId = _currentFromDestId;
+      _currentFromDestId = null;
+      openDestination(destId);
+    } else if (currentPageWaveName) {
       openWave(currentPageWaveName, wavePct(currentPageWaveName));
     } else {
       showPage('wave-detail');
     }
+  }
+
+  function openCurrentFromDest(currentId) {
+    const current = DB_CURRENTS.find(c => c.id === currentId);
+    if (!current) return;
+    const wave = DB_WAVES.find(w => w.id === current.waveId);
+    _currentFromDestId = _currentDestId;
+    currentPageWaveName = wave ? wave.name : null;
+    currentPageCurrentId = currentId;
+    const headerName = document.getElementById('cp-header-name');
+    if (headerName) headerName.textContent = current.name;
+    const headerWave = document.getElementById('cp-header-wave');
+    if (headerWave) headerWave.textContent = wave ? wave.name : '';
+    cpWaterPct = 0;
+    drawCpWaterLevel(0);
+    showCompleted = false;
+    document.getElementById('completedList').style.display = 'none';
+    document.getElementById('completedChevron').style.transform = '';
+    currentFilter = 'next5';
+    document.getElementById('toggleNext5').classList.add('active');
+    document.getElementById('toggleAll').classList.remove('active');
+    renderTasks();
+    showPage('current');
   }
 
   function openCurrent(waveName, currentName) {
@@ -6266,13 +6294,17 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       return;
     }
 
-    list.innerHTML = incomplete.map(item => `
-      <div class="cp-task-swipe-wrap" data-di="${item.id}">
+    list.innerHTML = incomplete.map(item => {
+      const hasLink = !!item.currentId;
+      const rowClick = hasLink ? `onclick="openCurrentFromDest('${item.currentId}')"` : '';
+      const chevron  = hasLink ? `<svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>` : '';
+      return `<div class="cp-task-swipe-wrap" data-di="${item.id}">
         <div class="cp-task-swipe-inner">
-          <div class="cp-task-item">
-            <div class="cp-checkbox" onclick="toggleDestItem('${dest.id}','${item.id}')"></div>
+          <div class="cp-task-item" ${rowClick} style="${hasLink ? 'cursor:pointer;' : ''}">
+            <div class="cp-checkbox" onclick="event.stopPropagation();toggleDestItem('${dest.id}','${item.id}')"></div>
             ${itemIcon(item)}
             <span class="cp-task-name">${item.name}</span>
+            ${chevron}
           </div>
           <div class="cp-task-swipe-actions" style="flex-basis:56px;">
             <button class="cp-task-swipe-delete-btn" onclick="deleteDestItem('${dest.id}','${item.id}')">
@@ -6280,7 +6312,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
             </button>
           </div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     if (completed.length) {
       list.innerHTML += `
