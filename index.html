@@ -6536,10 +6536,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const current = DB_CURRENTS.find(c => c.id === currentId);
     if (!dest || !current) return;
     dest.items.push({ id: 'di_' + Date.now(), name: current.name, done: false, currentId });
+    current.active = false;
     saveDests();
+    save();
     renderDestinationDetail();
     renderWaveDestinations();
-    // Refresh picker so added item shows as "Added"
+    renderCurrentsList(currentWaveDetailName);
+    // Refresh picker so moved current no longer appears in Active
     openAddCurrentToDest();
   }
 
