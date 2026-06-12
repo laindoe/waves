@@ -1350,12 +1350,6 @@
 
     </div>
 
-    <!-- DESTINATIONS -->
-    <div id="destinations-section" style="display:none;">
-      <div class="section-label">Destinations</div>
-      <div id="destinations-list"></div>
-    </div>
-
     <!-- CHOOSE YOUR WAVE -->
     <div class="section-label">Choose Your Wave</div>
 
@@ -1415,6 +1409,9 @@
 
   <!-- ACTIVE CURRENTS -->
   <div class="wd-content">
+    <!-- DESTINATIONS (for this wave) -->
+    <div id="wd-destinations-section"></div>
+
     <div class="aw-heading">ACTIVE CURRENTS</div>
 
     <div class="currents-list" id="currentsList">
@@ -2343,7 +2340,6 @@
           </div>`;
       }).join('');
     }
-    if (typeof renderDestinations === 'function') renderDestinations();
   }
 
   // ── RENDER: WAVES ACCORDION ──
@@ -3467,6 +3463,7 @@
     if (headerEl) headerEl.textContent = name;
 
     renderCurrentsList(name);
+    renderWaveDestinations();
     updateWaveCoverDisplay(DB_WAVES.find(w => w.name === name));
     showPage('wave-detail');
   }
@@ -6065,22 +6062,19 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   var _editingDestId = null;
   var _currentDestId = null;
 
-  function renderDestinations() {
-    const section = document.getElementById('destinations-section');
-    const list    = document.getElementById('destinations-list');
-    if (!section || !list) return;
-    if (!DB_DESTINATIONS.length) {
-      section.style.display = 'none';
-      return;
-    }
-    section.style.display = 'block';
-    list.innerHTML = DB_DESTINATIONS.map(dest => {
+  function renderWaveDestinations() {
+    const section = document.getElementById('wd-destinations-section');
+    if (!section) return;
+    const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
+    if (!wave) { section.innerHTML = ''; return; }
+    const waveDests = DB_DESTINATIONS.filter(d => d.waveId === wave.id);
+    const cards = waveDests.map(dest => {
       const total = dest.items.length;
       const done  = dest.items.filter(i => i.done).length;
       const pct   = total ? Math.round(done / total * 100) : 0;
       return `
-        <div onclick="openDestination('${dest.id}')" style="background:${dest.color};border-radius:18px;padding:22px 20px 16px;margin-bottom:12px;cursor:pointer;position:relative;overflow:hidden;">
-          <div style="font-size:22px;font-weight:700;color:white;letter-spacing:-0.01em;margin-bottom:14px;">${dest.name}</div>
+        <div onclick="openDestination('${dest.id}')" style="background:${dest.color};border-radius:18px;padding:22px 20px 16px;margin-bottom:12px;cursor:pointer;">
+          <div style="font-size:20px;font-weight:700;color:white;letter-spacing:-0.01em;margin-bottom:14px;">${dest.name}</div>
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="flex:1;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;">
               <div style="height:4px;background:white;border-radius:2px;width:${pct}%;"></div>
@@ -6088,8 +6082,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
             <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;">${done} / ${total}</span>
           </div>
         </div>`;
-    }).join('') + `
-      <div onclick="openAddDestination()" style="width:100%;padding:14px;background:none;border:1.5px dashed rgba(30,58,95,0.18);border-radius:14px;font-size:15px;font-weight:600;color:#8A9BAA;cursor:pointer;text-align:center;box-sizing:border-box;margin-bottom:4px;">+ New Destination</div>`;
+    }).join('');
+    section.innerHTML = (waveDests.length ? `<div class="aw-heading" style="margin-top:0;">DESTINATIONS</div>${cards}` : '')
+      + `<div onclick="openAddDestination()" style="padding:13px;background:none;border:1.5px dashed rgba(30,58,95,0.18);border-radius:14px;font-size:14px;font-weight:600;color:#8A9BAA;cursor:pointer;text-align:center;margin-bottom:20px;">+ New Destination</div>`;
   }
 
   function openDestination(id) {
@@ -6145,7 +6140,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     item.done = !item.done;
     saveDests();
     renderDestinationDetail();
-    renderDestinations();
+    renderWaveDestinations();
   }
 
   function deleteDestItem(destId, itemId) {
@@ -6154,12 +6149,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     dest.items = dest.items.filter(i => i.id !== itemId);
     saveDests();
     renderDestinationDetail();
-    renderDestinations();
+    renderWaveDestinations();
   }
 
   function goBackFromDestination() {
     _currentDestId = null;
-    showPage('today');
+    showPage('wave-detail');
   }
 
   // ── Create / Edit Destination ──
@@ -6208,11 +6203,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       const dest = DB_DESTINATIONS.find(d => d.id === _editingDestId);
       if (dest) { dest.name = name; dest.color = _selectedDestColor; }
     } else {
-      DB_DESTINATIONS.push({ id: 'dest_' + Date.now(), name, color: _selectedDestColor, items: [] });
+      const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
+      DB_DESTINATIONS.push({ id: 'dest_' + Date.now(), name, color: _selectedDestColor, items: [], waveId: wave ? wave.id : null });
     }
     saveDests();
     closeDestModal();
-    renderDestinations();
+    renderWaveDestinations();
     if (_editingDestId) {
       const headerName = document.getElementById('dest-header-name');
       if (headerName) headerName.textContent = name;
@@ -6238,8 +6234,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     DB_DESTINATIONS = DB_DESTINATIONS.filter(d => d.id !== _editingDestId);
     saveDests();
     closeDestModal();
-    renderDestinations();
-    showPage('today');
+    renderWaveDestinations();
+    showPage('wave-detail');
   }
 
   function closeDestModal() {
@@ -6263,7 +6259,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     saveDests();
     closeDestItemModal();
     renderDestinationDetail();
-    renderDestinations();
+    renderWaveDestinations();
   }
 
   function closeDestItemModal() {
@@ -6271,7 +6267,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   // initial render
-  renderDestinations();
+  // renderWaveDestinations called when wave detail page opens via openWave()
 </script>
 </body>
 </html>
