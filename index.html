@@ -6210,8 +6210,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           </div>
         </div>`;
     }).join('');
-    section.innerHTML = (waveDests.length ? `<div class="aw-heading" style="margin-top:0;">DESTINATIONS</div>${cards}` : '')
-      + `<div onclick="openAddDestination()" style="padding:13px;background:none;border:1.5px dashed rgba(30,58,95,0.18);border-radius:14px;font-size:14px;font-weight:600;color:#8A9BAA;cursor:pointer;text-align:center;margin-bottom:20px;">+ New Destination</div>`;
+    section.innerHTML = waveDests.length
+      ? `<div class="aw-heading" style="margin-top:0;">DESTINATIONS</div>${cards}`
+      : '';
   }
 
   function openDestination(id) {
