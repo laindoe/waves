@@ -1350,6 +1350,12 @@
 
     </div>
 
+    <!-- DESTINATIONS -->
+    <div id="destinations-section" style="display:none;">
+      <div class="section-label">Destinations</div>
+      <div id="destinations-list"></div>
+    </div>
+
     <!-- CHOOSE YOUR WAVE -->
     <div class="section-label">Choose Your Wave</div>
 
@@ -1947,6 +1953,62 @@
 </div>
 
 
+<!-- PAGE: DESTINATION DETAIL -->
+<div class="page" id="page-destination">
+  <header class="header" style="position:relative;justify-content:center;">
+    <button class="back-btn" onclick="goBackFromDestination()" style="position:absolute;left:20px;">
+      <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9l8 8" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <span id="dest-header-name" style="font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;letter-spacing:0.04em;color:#1E3A5F;"></span>
+    <button onclick="openEditDestination()" style="position:absolute;right:20px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:#3EC6D8;cursor:pointer;padding:0;">Edit</button>
+  </header>
+  <div style="padding:0 20px 100px;">
+    <!-- Banner -->
+    <div id="dest-banner" style="border-radius:18px;margin:16px 0 20px;padding:24px 22px 20px;position:relative;overflow:hidden;">
+      <div id="dest-banner-name" style="font-size:26px;font-weight:700;color:white;letter-spacing:-0.01em;margin-bottom:16px;"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;height:5px;background:rgba(255,255,255,0.3);border-radius:3px;">
+          <div id="dest-banner-bar" style="height:5px;background:white;border-radius:3px;width:0%;transition:width 0.4s ease;"></div>
+        </div>
+        <span id="dest-banner-count" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;"></span>
+      </div>
+    </div>
+    <!-- Items -->
+    <div id="dest-items-list"></div>
+    <button onclick="openAddDestItem()" style="width:100%;margin-top:8px;padding:14px;background:none;border:1.5px dashed rgba(30,58,95,0.2);border-radius:14px;font-size:15px;font-weight:600;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add Item</button>
+  </div>
+</div>
+
+<!-- CREATE / EDIT DESTINATION MODAL -->
+<div class="modal-overlay" id="destModal" onclick="if(event.target===this)closeDestModal()">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeDestModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div id="dest-modal-title" class="modal-title">NEW DESTINATION</div>
+    <div class="modal-field-label">NAME</div>
+    <input class="modal-input" id="dest-name-input" type="text" placeholder="e.g. Album Release" style="margin-bottom:20px;"/>
+    <div class="modal-field-label">COLOR</div>
+    <div id="dest-color-swatches" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;"></div>
+    <button type="button" class="modal-save-btn" id="dest-save-btn" onclick="saveDestination()">CREATE DESTINATION</button>
+    <button type="button" id="dest-delete-btn" onclick="confirmDeleteDestination()" style="display:none;width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(220,60,60,0.2);border-radius:14px;font-size:15px;font-weight:600;color:rgba(200,50,50,0.5);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">DELETE DESTINATION</button>
+  </div>
+</div>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal-overlay" id="destItemModal" onclick="if(event.target===this)closeDestItemModal()">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeDestItemModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-title">ADD ITEM</div>
+    <div class="modal-field-label">ITEM NAME</div>
+    <input class="modal-input" id="dest-item-name-input" type="text" placeholder="e.g. Record vocals" style="margin-bottom:24px;"
+      onkeydown="if(event.key==='Enter')saveDestItem()"/>
+    <button type="button" class="modal-save-btn" onclick="saveDestItem()">ADD ITEM</button>
+  </div>
+</div>
+
 </div><!-- end phone -->
 
 
@@ -2281,6 +2343,7 @@
           </div>`;
       }).join('');
     }
+    if (typeof renderDestinations === 'function') renderDestinations();
   }
 
   // ── RENDER: WAVES ACCORDION ──
@@ -5985,6 +6048,230 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       });
     });
   }
+</script>
+
+<script>
+  // ── DESTINATIONS ──
+  var DB_DESTINATIONS = JSON.parse(localStorage.getItem('dests_data') || '[]');
+  function saveDests() {
+    try { localStorage.setItem('dests_data', JSON.stringify(DB_DESTINATIONS)); } catch(e) {}
+  }
+
+  var DEST_COLORS = [
+    '#4E2CC7','#3EC6D8','#E05C8C','#F5A623','#27AE60',
+    '#E74C3C','#8E44AD','#2980B9','#1A3A4A','#E67E22'
+  ];
+
+  var _editingDestId = null;
+  var _currentDestId = null;
+
+  function renderDestinations() {
+    const section = document.getElementById('destinations-section');
+    const list    = document.getElementById('destinations-list');
+    if (!section || !list) return;
+    if (!DB_DESTINATIONS.length) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = 'block';
+    list.innerHTML = DB_DESTINATIONS.map(dest => {
+      const total = dest.items.length;
+      const done  = dest.items.filter(i => i.done).length;
+      const pct   = total ? Math.round(done / total * 100) : 0;
+      return `
+        <div onclick="openDestination('${dest.id}')" style="background:${dest.color};border-radius:18px;padding:22px 20px 16px;margin-bottom:12px;cursor:pointer;position:relative;overflow:hidden;">
+          <div style="font-size:22px;font-weight:700;color:white;letter-spacing:-0.01em;margin-bottom:14px;">${dest.name}</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="flex:1;height:4px;background:rgba(255,255,255,0.3);border-radius:2px;">
+              <div style="height:4px;background:white;border-radius:2px;width:${pct}%;"></div>
+            </div>
+            <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;">${done} / ${total}</span>
+          </div>
+        </div>`;
+    }).join('') + `
+      <div onclick="openAddDestination()" style="width:100%;padding:14px;background:none;border:1.5px dashed rgba(30,58,95,0.18);border-radius:14px;font-size:15px;font-weight:600;color:#8A9BAA;cursor:pointer;text-align:center;box-sizing:border-box;margin-bottom:4px;">+ New Destination</div>`;
+  }
+
+  function openDestination(id) {
+    const dest = DB_DESTINATIONS.find(d => d.id === id);
+    if (!dest) return;
+    _currentDestId = id;
+    const headerName = document.getElementById('dest-header-name');
+    if (headerName) headerName.textContent = dest.name;
+    renderDestinationDetail();
+    showPage('destination');
+  }
+
+  function renderDestinationDetail() {
+    const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
+    if (!dest) return;
+    const total = dest.items.length;
+    const done  = dest.items.filter(i => i.done).length;
+    const pct   = total ? Math.round(done / total * 100) : 0;
+
+    const banner = document.getElementById('dest-banner');
+    if (banner) banner.style.background = dest.color;
+    const bannerName = document.getElementById('dest-banner-name');
+    if (bannerName) bannerName.textContent = dest.name;
+    const bar = document.getElementById('dest-banner-bar');
+    if (bar) bar.style.width = pct + '%';
+    const count = document.getElementById('dest-banner-count');
+    if (count) count.textContent = done + ' / ' + total + ' items';
+
+    const list = document.getElementById('dest-items-list');
+    if (!list) return;
+    if (!dest.items.length) {
+      list.innerHTML = '<div style="padding:16px 0;text-align:center;color:#8A9BAA;font-size:15px;">No items yet. Add your first item below.</div>';
+      return;
+    }
+    list.innerHTML = dest.items.map(item => `
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(30,58,95,0.07);">
+        <button onclick="toggleDestItem('${dest.id}','${item.id}')" style="width:24px;height:24px;border-radius:50%;border:2px solid ${item.done ? dest.color : 'rgba(30,58,95,0.2)'};background:${item.done ? dest.color : 'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;transition:all 0.2s;">
+          ${item.done ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+        </button>
+        <span style="flex:1;font-size:16px;font-weight:500;color:${item.done ? '#B0BEC5' : '#1A3A4A'};text-decoration:${item.done ? 'line-through' : 'none'};">${item.name}</span>
+        <button onclick="deleteDestItem('${dest.id}','${item.id}')" style="background:none;border:none;cursor:pointer;padding:4px;color:#C0CDD5;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function toggleDestItem(destId, itemId) {
+    const dest = DB_DESTINATIONS.find(d => d.id === destId);
+    if (!dest) return;
+    const item = dest.items.find(i => i.id === itemId);
+    if (!item) return;
+    item.done = !item.done;
+    saveDests();
+    renderDestinationDetail();
+    renderDestinations();
+  }
+
+  function deleteDestItem(destId, itemId) {
+    const dest = DB_DESTINATIONS.find(d => d.id === destId);
+    if (!dest) return;
+    dest.items = dest.items.filter(i => i.id !== itemId);
+    saveDests();
+    renderDestinationDetail();
+    renderDestinations();
+  }
+
+  function goBackFromDestination() {
+    _currentDestId = null;
+    showPage('today');
+  }
+
+  // ── Create / Edit Destination ──
+  function openAddDestination() {
+    _editingDestId = null;
+    document.getElementById('dest-modal-title').textContent = 'NEW DESTINATION';
+    document.getElementById('dest-name-input').value = '';
+    document.getElementById('dest-save-btn').textContent = 'CREATE DESTINATION';
+    document.getElementById('dest-delete-btn').style.display = 'none';
+    renderDestColorSwatches('#4E2CC7');
+    document.getElementById('destModal').classList.add('open');
+    setTimeout(() => document.getElementById('dest-name-input').focus(), 100);
+  }
+
+  function openEditDestination() {
+    const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
+    if (!dest) return;
+    _editingDestId = _currentDestId;
+    document.getElementById('dest-modal-title').textContent = 'EDIT DESTINATION';
+    document.getElementById('dest-name-input').value = dest.name;
+    document.getElementById('dest-save-btn').textContent = 'SAVE CHANGES';
+    document.getElementById('dest-delete-btn').style.display = 'block';
+    renderDestColorSwatches(dest.color);
+    document.getElementById('destModal').classList.add('open');
+  }
+
+  var _selectedDestColor = '#4E2CC7';
+  function renderDestColorSwatches(selected) {
+    _selectedDestColor = selected || '#4E2CC7';
+    const container = document.getElementById('dest-color-swatches');
+    if (!container) return;
+    container.innerHTML = DEST_COLORS.map(c => `
+      <div onclick="selectDestColor('${c}')" style="width:32px;height:32px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${c === _selectedDestColor ? 'white' : 'transparent'};box-shadow:${c === _selectedDestColor ? '0 0 0 2px ' + c : 'none'};transition:all 0.15s;"></div>
+    `).join('');
+  }
+
+  function selectDestColor(color) {
+    _selectedDestColor = color;
+    renderDestColorSwatches(color);
+  }
+
+  function saveDestination() {
+    const name = document.getElementById('dest-name-input').value.trim();
+    if (!name) { document.getElementById('dest-name-input').focus(); return; }
+    if (_editingDestId) {
+      const dest = DB_DESTINATIONS.find(d => d.id === _editingDestId);
+      if (dest) { dest.name = name; dest.color = _selectedDestColor; }
+    } else {
+      DB_DESTINATIONS.push({ id: 'dest_' + Date.now(), name, color: _selectedDestColor, items: [] });
+    }
+    saveDests();
+    closeDestModal();
+    renderDestinations();
+    if (_editingDestId) {
+      const headerName = document.getElementById('dest-header-name');
+      if (headerName) headerName.textContent = name;
+      renderDestinationDetail();
+    }
+  }
+
+  function confirmDeleteDestination() {
+    const btn = document.getElementById('dest-delete-btn');
+    if (btn.dataset.confirm !== 'true') {
+      btn.textContent = 'Are you sure?';
+      btn.style.color = '#E05C5C';
+      btn.style.borderColor = 'rgba(224,92,92,0.4)';
+      btn.dataset.confirm = 'true';
+      setTimeout(() => {
+        btn.textContent = 'DELETE DESTINATION';
+        btn.style.color = 'rgba(200,50,50,0.5)';
+        btn.style.borderColor = 'rgba(220,60,60,0.2)';
+        btn.dataset.confirm = '';
+      }, 3000);
+      return;
+    }
+    DB_DESTINATIONS = DB_DESTINATIONS.filter(d => d.id !== _editingDestId);
+    saveDests();
+    closeDestModal();
+    renderDestinations();
+    showPage('today');
+  }
+
+  function closeDestModal() {
+    document.getElementById('destModal').classList.remove('open');
+    _editingDestId = null;
+  }
+
+  // ── Add Item ──
+  function openAddDestItem() {
+    document.getElementById('dest-item-name-input').value = '';
+    document.getElementById('destItemModal').classList.add('open');
+    setTimeout(() => document.getElementById('dest-item-name-input').focus(), 100);
+  }
+
+  function saveDestItem() {
+    const name = document.getElementById('dest-item-name-input').value.trim();
+    if (!name) { document.getElementById('dest-item-name-input').focus(); return; }
+    const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
+    if (!dest) return;
+    dest.items.push({ id: 'di_' + Date.now(), name, done: false });
+    saveDests();
+    closeDestItemModal();
+    renderDestinationDetail();
+    renderDestinations();
+  }
+
+  function closeDestItemModal() {
+    document.getElementById('destItemModal').classList.remove('open');
+  }
+
+  // initial render
+  renderDestinations();
 </script>
 </body>
 </html>
