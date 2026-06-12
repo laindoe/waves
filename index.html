@@ -1979,12 +1979,16 @@
         <span id="dest-banner-count" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;"></span>
       </div>
     </div>
-    <!-- Items -->
-    <div id="dest-items-list"></div>
-    <div style="display:flex;gap:10px;margin-top:8px;">
-      <button onclick="openAddDestItem()" style="flex:1;padding:14px;background:none;border:1.5px dashed rgba(30,58,95,0.2);border-radius:14px;font-size:15px;font-weight:600;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add Item</button>
-      <button onclick="openAddCurrentToDest()" style="flex:1;padding:14px;background:none;border:1.5px dashed rgba(62,198,216,0.35);border-radius:14px;font-size:15px;font-weight:600;color:#3EC6D8;cursor:pointer;font-family:'DM Sans',sans-serif;">+ From Currents</button>
+    <!-- Tasks header -->
+    <div class="cp-tasks-header">
+      <div class="cp-tasks-title">TASKS</div>
+      <div style="display:flex;gap:8px;">
+        <button class="cp-add-btn" onclick="openAddCurrentToDest()">+ From Currents</button>
+        <button class="cp-add-btn" onclick="openAddDestItem()">+ Add Task</button>
+      </div>
     </div>
+    <!-- Task list -->
+    <div class="cp-task-list" id="dest-items-list"></div>
   </div>
 </div>
 
@@ -6219,11 +6223,15 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const dest = DB_DESTINATIONS.find(d => d.id === id);
     if (!dest) return;
     _currentDestId = id;
+    _destCompletedOpen = false;
     const headerName = document.getElementById('dest-header-name');
     if (headerName) headerName.textContent = dest.name;
     renderDestinationDetail();
     showPage('destination');
   }
+
+  var _destCompletedOpen = false;
+  var _destItemOpenRow = null;
 
   function renderDestinationDetail() {
     const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
@@ -6239,30 +6247,99 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const bar = document.getElementById('dest-banner-bar');
     if (bar) bar.style.width = pct + '%';
     const count = document.getElementById('dest-banner-count');
-    if (count) count.textContent = done + ' / ' + total + ' items';
+    if (count) count.textContent = done + ' / ' + total;
 
     const list = document.getElementById('dest-items-list');
     if (!list) return;
-    if (!dest.items.length) {
-      list.innerHTML = '<div style="padding:16px 0;text-align:center;color:#8A9BAA;font-size:15px;">No items yet. Add your first item below.</div>';
+
+    const incomplete = dest.items.filter(i => !i.done);
+    const completed  = dest.items.filter(i => i.done);
+    const checkSvg = `<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    function itemIcon(item) {
+      const linked = item.currentId ? DB_CURRENTS.find(c => c.id === item.currentId) : null;
+      return linked ? `<div style="width:28px;height:28px;border-radius:8px;background:rgba(30,58,95,0.07);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${getCurrentIcon(linked, 17)}</div>` : '';
+    }
+
+    if (!total) {
+      list.innerHTML = '<div style="padding:20px 0;text-align:center;color:#8A9BAA;font-size:15px;">No tasks yet — add one below.</div>';
       return;
     }
-    list.innerHTML = dest.items.map(item => {
-      const linkedCurrent = item.currentId ? DB_CURRENTS.find(c => c.id === item.currentId) : null;
-      const iconHtml = linkedCurrent
-        ? `<div style="width:32px;height:32px;border-radius:9px;background:rgba(30,58,95,0.07);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${getCurrentIcon(linkedCurrent, 20)}</div>`
-        : '';
-      return `<div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(30,58,95,0.07);">
-        <button onclick="toggleDestItem('${dest.id}','${item.id}')" style="width:24px;height:24px;border-radius:50%;border:2px solid ${item.done ? dest.color : 'rgba(30,58,95,0.2)'};background:${item.done ? dest.color : 'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;transition:all 0.2s;">
-          ${item.done ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
-        </button>
-        ${iconHtml}
-        <span style="flex:1;font-size:16px;font-weight:500;color:${item.done ? '#B0BEC5' : '#1A3A4A'};text-decoration:${item.done ? 'line-through' : 'none'};">${item.name}</span>
-        <button onclick="deleteDestItem('${dest.id}','${item.id}')" style="background:none;border:none;cursor:pointer;padding:4px;color:#C0CDD5;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C0CDD5" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>`;
-    }).join('');
+
+    list.innerHTML = incomplete.map(item => `
+      <div class="cp-task-swipe-wrap" data-di="${item.id}">
+        <div class="cp-task-swipe-inner">
+          <div class="cp-task-item">
+            <div class="cp-checkbox" onclick="toggleDestItem('${dest.id}','${item.id}')"></div>
+            ${itemIcon(item)}
+            <span class="cp-task-name">${item.name}</span>
+          </div>
+          <div class="cp-task-swipe-actions" style="flex-basis:56px;">
+            <button class="cp-task-swipe-delete-btn" onclick="deleteDestItem('${dest.id}','${item.id}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05C5C" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`).join('');
+
+    if (completed.length) {
+      list.innerHTML += `
+        <div onclick="toggleDestCompleted()" style="display:flex;align-items:center;justify-content:space-between;padding:14px 4px 8px;cursor:pointer;">
+          <span style="font-size:12px;font-weight:700;letter-spacing:0.1em;color:#8A9BAA;">VIEW COMPLETED (${completed.length})</span>
+          <svg id="dest-completed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A9BAA" stroke-width="2" stroke-linecap="round" style="transition:transform 0.2s;${_destCompletedOpen ? 'transform:rotate(180deg)' : ''}"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div id="dest-completed-list" style="display:${_destCompletedOpen ? 'block' : 'none'};">
+          ${completed.map(item => `
+            <div class="cp-task-item">
+              <div class="cp-checkbox checked" style="background:${dest.color};border-color:${dest.color};" onclick="toggleDestItem('${dest.id}','${item.id}')">${checkSvg}</div>
+              ${itemIcon(item)}
+              <span class="cp-task-name done">${item.name}</span>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    initDestItemSwipe();
+  }
+
+  function toggleDestCompleted() {
+    _destCompletedOpen = !_destCompletedOpen;
+    const el = document.getElementById('dest-completed-list');
+    const chevron = document.getElementById('dest-completed-chevron');
+    if (el) el.style.display = _destCompletedOpen ? 'block' : 'none';
+    if (chevron) chevron.style.transform = _destCompletedOpen ? 'rotate(180deg)' : '';
+  }
+
+  function initDestItemSwipe() {
+    _destItemOpenRow = null;
+    const W = 56;
+    document.querySelectorAll('#dest-items-list .cp-task-swipe-inner').forEach(inner => {
+      let startX = 0, active = false;
+      inner.addEventListener('touchstart', e => {
+        if (e.target.closest('.cp-checkbox')) return;
+        startX = e.touches[0].clientX; active = true;
+        inner.style.transition = 'none';
+      }, { passive: true });
+      inner.addEventListener('touchmove', e => {
+        if (!active) return;
+        const base = _destItemOpenRow === inner ? -W : 0;
+        inner.style.transform = `translateX(${Math.min(0, Math.max(-W, base + e.touches[0].clientX - startX))}px)`;
+      }, { passive: true });
+      inner.addEventListener('touchend', e => {
+        if (!active) return; active = false;
+        const dx = e.changedTouches[0].clientX - startX;
+        const wasOpen = _destItemOpenRow === inner;
+        inner.style.transition = 'transform 0.25s ease';
+        if (!wasOpen && dx < -20) {
+          if (_destItemOpenRow) _destItemOpenRow.style.transform = 'translateX(0)';
+          inner.style.transform = `translateX(-${W}px)`;
+          _destItemOpenRow = inner;
+        } else if (wasOpen && dx > 15) {
+          inner.style.transform = 'translateX(0)'; _destItemOpenRow = null;
+        } else {
+          inner.style.transform = wasOpen ? `translateX(-${W}px)` : 'translateX(0)';
+        }
+      }, { passive: true });
+    });
   }
 
   function toggleDestItem(destId, itemId) {
