@@ -4212,6 +4212,11 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     <div id="editWaveCategories" style="margin-bottom:12px;"></div>
     <button onclick="addEditCategory()" style="width:100%;padding:11px;background:none;border:1.5px dashed rgba(30,58,95,0.2);border-radius:12px;font-size:15px;color:#3EC6D8;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:20px;">+ Add Category</button>
 
+    <!-- Destinations -->
+    <div class="modal-field-label" id="ew-dest-label" style="display:none;">DESTINATIONS</div>
+    <div id="ew-destinations-list" style="margin-bottom:8px;"></div>
+    <button id="ew-add-dest-btn" onclick="openAddDestinationFromEdit()" style="display:none;width:100%;padding:11px;background:none;border:1.5px dashed rgba(62,198,216,0.35);border-radius:12px;font-size:15px;color:#3EC6D8;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:20px;">+ Add Destination</button>
+
     <button type="button" class="modal-save-btn" onclick="saveEditWave()">SAVE WAVE</button>
     <button type="button" id="deleteWaveBtn" onclick="confirmDeleteWave()" style="display:none;width:100%;margin-top:12px;padding:12px;background:none;border:1.5px solid rgba(220,60,60,0.2);border-radius:14px;font-size:15px;font-weight:600;color:rgba(200,50,50,0.5);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;">DELETE WAVE</button>
   </div>
@@ -4337,6 +4342,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     renderEditIcons();
     renderEditColors();
     renderEditCategories();
+    renderEwDestinations();
     const clearBtn = document.getElementById('clearLogoBtn');
     if (clearBtn) clearBtn.style.display = editLogoDataUrl ? 'inline' : 'none';
     const deleteBtn = document.getElementById('deleteWaveBtn');
@@ -4349,6 +4355,56 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   function closeEditWave() { document.getElementById('editWaveModal').classList.remove('open'); }
   function closeEditWaveModal(e) { if (e.target === document.getElementById('editWaveModal')) closeEditWave(); }
+
+  function renderEwDestinations() {
+    const label   = document.getElementById('ew-dest-label');
+    const list    = document.getElementById('ew-destinations-list');
+    const addBtn  = document.getElementById('ew-add-dest-btn');
+    if (!list) return;
+    // Only show destinations section when editing an existing wave
+    const show = !!editingWaveId;
+    if (label)  label.style.display  = show ? '' : 'none';
+    if (addBtn) addBtn.style.display  = show ? '' : 'none';
+    if (!show) { list.innerHTML = ''; return; }
+    const dests = DB_DESTINATIONS.filter(d => d.waveId === editingWaveId);
+    list.innerHTML = dests.map(d => {
+      const done  = d.items.filter(i => i.done).length;
+      const total = d.items.length;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.6);border-radius:12px;margin-bottom:8px;">
+        <div style="width:20px;height:20px;border-radius:6px;background:${d.color};flex-shrink:0;"></div>
+        <span style="flex:1;font-size:15px;font-weight:600;color:#1E3A5F;letter-spacing:0.02em;">${d.name}</span>
+        <span style="font-size:12px;color:#8A9BAA;margin-right:6px;">${done}/${total}</span>
+        <button onclick="openEditDestinationFromEdit('${d.id}')" style="background:none;border:none;cursor:pointer;color:#3EC6D8;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;padding:0;">Edit</button>
+      </div>`;
+    }).join('');
+  }
+
+  var _destFromEditWave = false;
+
+  function openAddDestinationFromEdit() {
+    _destFromEditWave = true;
+    _editingDestId = null;
+    document.getElementById('dest-modal-title').textContent = 'NEW DESTINATION';
+    document.getElementById('dest-name-input').value = '';
+    document.getElementById('dest-save-btn').textContent = 'CREATE DESTINATION';
+    document.getElementById('dest-delete-btn').style.display = 'none';
+    renderDestColorSwatches('#4E2CC7');
+    document.getElementById('destModal').classList.add('open');
+    setTimeout(() => document.getElementById('dest-name-input').focus(), 100);
+  }
+
+  function openEditDestinationFromEdit(destId) {
+    _destFromEditWave = true;
+    const dest = DB_DESTINATIONS.find(d => d.id === destId);
+    if (!dest) return;
+    _editingDestId = destId;
+    document.getElementById('dest-modal-title').textContent = 'EDIT DESTINATION';
+    document.getElementById('dest-name-input').value = dest.name;
+    document.getElementById('dest-save-btn').textContent = 'SAVE CHANGES';
+    document.getElementById('dest-delete-btn').style.display = 'block';
+    renderDestColorSwatches(dest.color);
+    document.getElementById('destModal').classList.add('open');
+  }
 
   function renderEditIcons() {
     updateIconPreview();
@@ -6178,6 +6234,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   // ── Create / Edit Destination ──
   function openAddDestination() {
+    _destFromEditWave = false;
     _editingDestId = null;
     document.getElementById('dest-modal-title').textContent = 'NEW DESTINATION';
     document.getElementById('dest-name-input').value = '';
@@ -6189,6 +6246,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function openEditDestination() {
+    _destFromEditWave = false;
     const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
     if (!dest) return;
     _editingDestId = _currentDestId;
@@ -6218,17 +6276,21 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   function saveDestination() {
     const name = document.getElementById('dest-name-input').value.trim();
     if (!name) { document.getElementById('dest-name-input').focus(); return; }
+    const wasEditing = _editingDestId;
     if (_editingDestId) {
       const dest = DB_DESTINATIONS.find(d => d.id === _editingDestId);
       if (dest) { dest.name = name; dest.color = _selectedDestColor; }
     } else {
-      const wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
+      let wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
+      if (!wave && editingWaveId) wave = DB_WAVES.find(w => w.id === editingWaveId);
       DB_DESTINATIONS.push({ id: 'dest_' + Date.now(), name, color: _selectedDestColor, items: [], waveId: wave ? wave.id : null });
     }
     saveDests();
+    const fromEdit = _destFromEditWave;
     closeDestModal();
     renderWaveDestinations();
-    if (_editingDestId) {
+    if (fromEdit) renderEwDestinations();
+    if (wasEditing) {
       const headerName = document.getElementById('dest-header-name');
       if (headerName) headerName.textContent = name;
       renderDestinationDetail();
@@ -6250,16 +6312,19 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       }, 3000);
       return;
     }
+    const fromEdit = _destFromEditWave;
     DB_DESTINATIONS = DB_DESTINATIONS.filter(d => d.id !== _editingDestId);
     saveDests();
     closeDestModal();
     renderWaveDestinations();
-    showPage('wave-detail');
+    if (fromEdit) { renderEwDestinations(); }
+    else { showPage('wave-detail'); }
   }
 
   function closeDestModal() {
     document.getElementById('destModal').classList.remove('open');
     _editingDestId = null;
+    _destFromEditWave = false;
   }
 
   // ── Add Item ──
