@@ -1071,6 +1071,8 @@
   .wiz-loading { display:flex; flex-direction:column; align-items:center; padding:32px 0; gap:14px; }
   .wiz-spinner { width:36px; height:36px; border-radius:50%; border:3px solid rgba(62,198,216,0.2); border-top-color:#3EC6D8; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes destWaveScroll { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+  @keyframes destBoatBob { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
   .wiz-loading-text { font-size:16px; color:#8A9BAA; font-style:italic; }
   .wiz-nav { display:flex; gap:10px; margin-top:20px; }
   .wiz-btn-back { flex:1; padding:14px; border:1.5px solid rgba(30,58,95,0.2); border-radius:12px; background:none; font-size:15px; font-weight:600; color:#1E3A5F; cursor:pointer; font-family:"DM Sans",sans-serif; display:flex; align-items:center; justify-content:center; gap:8px; }
@@ -6401,16 +6403,38 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         <rect x="11" y="17" width="50" height="3" rx="1.5" fill="${dest.color}" opacity="0.7"/>
         <path d="M3,22 Q35,26 72,22" stroke="white" stroke-width="1.2" fill="none" opacity="0.35"/>
       </svg>`;
-      // Both island and boat share top:57px (their waterline anchors aligned)
+      // Island and boat anchored to the same waterline (47% from top).
+      // Animated wave layers scroll in the water area; boat bobs gently.
       scene.innerHTML = `
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,#87CEEB 0%,#B8EAFB 47%,#4EC9D8 47%,#2BABB8 100%);overflow:hidden;">
-          <div style="position:absolute;top:5px;left:8%;width:54px;height:18px;background:rgba(255,255,255,0.85);border-radius:20px;"></div>
-          <div style="position:absolute;top:2px;left:12%;width:76px;height:20px;background:rgba(255,255,255,0.75);border-radius:20px;"></div>
-          <div style="position:absolute;top:8px;left:46%;width:40px;height:15px;background:rgba(255,255,255,0.65);border-radius:20px;"></div>
-          <div style="position:absolute;top:49%;left:0;right:0;height:2px;background:rgba(255,255,255,0.18);border-radius:1px;"></div>
-          <div style="position:absolute;top:60%;left:4%;right:12%;height:1.5px;background:rgba(255,255,255,0.12);border-radius:1px;"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,#87CEEB 0%,#B8EAFB 47%,#38B8CC 47%,#1E96A8 100%);overflow:hidden;">
+          <!-- Clouds -->
+          <div style="position:absolute;top:5px;left:8%;width:54px;height:18px;background:rgba(255,255,255,0.88);border-radius:20px;"></div>
+          <div style="position:absolute;top:2px;left:12%;width:76px;height:20px;background:rgba(255,255,255,0.78);border-radius:20px;"></div>
+          <div style="position:absolute;top:8px;left:46%;width:40px;height:15px;background:rgba(255,255,255,0.68);border-radius:20px;"></div>
+          <!-- Animated wave band 1 — back layer, slowest -->
+          <div style="position:absolute;top:45%;left:0;width:200%;height:28px;animation:destWaveScroll 7s linear infinite;">
+            <svg viewBox="0 0 800 28" preserveAspectRatio="none" style="width:100%;height:100%;display:block;">
+              <path d="M0,14 Q50,4 100,14 Q150,24 200,14 Q250,4 300,14 Q350,24 400,14 Q450,4 500,14 Q550,24 600,14 Q650,4 700,14 Q750,24 800,14 L800,28 L0,28 Z" fill="rgba(255,255,255,0.14)"/>
+            </svg>
+          </div>
+          <!-- Animated wave band 2 — mid layer, medium speed, reverse -->
+          <div style="position:absolute;top:49%;left:0;width:200%;height:22px;animation:destWaveScroll 5s linear infinite reverse;">
+            <svg viewBox="0 0 800 22" preserveAspectRatio="none" style="width:100%;height:100%;display:block;">
+              <path d="M0,11 Q50,3 100,11 Q150,19 200,11 Q250,3 300,11 Q350,19 400,11 Q450,3 500,11 Q550,19 600,11 Q650,3 700,11 Q750,19 800,11 L800,22 L0,22 Z" fill="rgba(255,255,255,0.11)"/>
+            </svg>
+          </div>
+          <!-- Animated wave band 3 — front layer, fastest -->
+          <div style="position:absolute;top:54%;left:0;width:200%;height:18px;animation:destWaveScroll 3.5s linear infinite;">
+            <svg viewBox="0 0 800 18" preserveAspectRatio="none" style="width:100%;height:100%;display:block;">
+              <path d="M0,9 Q50,2 100,9 Q150,16 200,9 Q250,2 300,9 Q350,16 400,9 Q450,2 500,9 Q550,16 600,9 Q650,2 700,9 Q750,16 800,9 L800,18 L0,18 Z" fill="rgba(255,255,255,0.09)"/>
+            </svg>
+          </div>
+          <!-- Island -->
           <div style="position:absolute;top:calc(47% - 47px);right:3%;">${islandSvg}</div>
-          <div id="dest-boat-el" style="position:absolute;top:calc(47% - 23px);left:${boatLeftPct}%;transform:translateX(-50%);transition:left 1.4s cubic-bezier(0.4,0,0.2,1);">${boatSvg}</div>
+          <!-- Boat: outer div moves horizontally, inner div bobs vertically -->
+          <div id="dest-boat-el" style="position:absolute;top:calc(47% - 23px);left:${boatLeftPct}%;transform:translateX(-50%);transition:left 1.4s cubic-bezier(0.4,0,0.2,1);">
+            <div style="animation:destBoatBob 2.6s ease-in-out infinite;">${boatSvg}</div>
+          </div>
         </div>`;
     }
 
