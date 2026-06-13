@@ -2414,6 +2414,40 @@
       const iconHtml = wave.logo
         ? `<img src="${wave.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`
         : `<span style="font-size:18px;line-height:1;">${wave.icon || '〜'}</span>`;
+
+      // ── Destination cards ──
+      const waveDests = DB_DESTINATIONS.filter(d => d.waveId === wave.id);
+      const destsHtml = waveDests.length ? `
+        <div style="padding:8px 10px 4px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:${wave.color || '#3EC6D8'};margin-bottom:6px;opacity:0.8;">DESTINATIONS</div>
+          ${waveDests.map(dest => {
+            let dTotal = 0, dDone = 0;
+            dest.items.filter(i => i.currentId).forEach(i => {
+              const tasks = getTasksForCurrent(i.currentId);
+              dTotal += tasks.length;
+              dDone  += tasks.filter(t => t.done).length;
+            });
+            const dPct = dTotal ? Math.round(dDone / dTotal * 100) : 0;
+            const iconInner = dest.emoji
+              ? `<span style="font-size:18px;line-height:1;">${dest.emoji}</span>`
+              : `<span style="font-size:12px;font-weight:700;color:${dest.color};">${dest.name.slice(0,2).toUpperCase()}</span>`;
+            return `<div onclick="event.stopPropagation(); openDestination('${dest.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:linear-gradient(135deg,${dest.color}1A,${dest.color}0A);border:1px solid ${dest.color}33;border-radius:12px;cursor:pointer;">
+              <div style="width:34px;height:34px;border-radius:10px;background:${dest.color}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconInner}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:700;color:#1E3A5F;letter-spacing:0.01em;margin-bottom:4px;">${dest.name}</div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div style="flex:1;height:3px;background:rgba(30,58,95,0.1);border-radius:2px;"><div style="height:3px;background:${dest.color};border-radius:2px;width:${dPct}%;"></div></div>
+                  <span style="font-size:11px;color:#8A9BAA;white-space:nowrap;">${dPct}%</span>
+                </div>
+                <div style="font-size:11px;color:#8A9BAA;margin-top:2px;">${dDone} / ${dTotal} tasks</div>
+              </div>
+              <svg width="6" height="11" viewBox="0 0 6 11" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l4 4.5-4 4.5"/></svg>
+            </div>`;
+          }).join('')}
+        </div>
+        ${getActiveCurrents(wave.name).length ? `<div style="margin:0 10px 4px;border-top:1px solid rgba(30,58,95,0.06);padding-top:6px;font-size:10px;font-weight:700;letter-spacing:0.1em;color:#8A9BAA;">CURRENTS</div>` : ''}
+      ` : '';
+
       const actives = getActiveCurrents(wave.name);
       const currentsHtml = actives.map(c => {
         const cTasks = getTasksForCurrent(c.id);
@@ -2442,7 +2476,7 @@
             </div>
             <svg class="wa-chevron" onclick="toggleWave(this.closest('.wa-header'))" style="cursor:pointer;padding:4px;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A9BAA" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="wa-currents">${currentsHtml}</div>
+          <div class="wa-currents">${destsHtml}${currentsHtml}</div>
         </div>`;
     }).join('');
   }
