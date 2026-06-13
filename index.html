@@ -1978,21 +1978,24 @@
 
     <!-- Progress card -->
     <div style="margin:0 18px 20px;background:white;border-radius:22px;padding:18px;box-shadow:0 2px 18px rgba(30,58,95,0.09);">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
         <span style="font-size:14px;font-weight:600;color:#1E3A5F;letter-spacing:0.02em;">Overall Progress</span>
-        <span id="dest-pct-label" style="font-size:18px;font-weight:700;color:#4E2CC7;"></span>
+        <div style="text-align:right;">
+          <div id="dest-pct-label" style="font-size:18px;font-weight:700;color:#4E2CC7;line-height:1;"></div>
+          <div id="dest-tasks-label" style="font-size:11px;color:#8A9BAA;margin-top:3px;"></div>
+        </div>
       </div>
       <!-- Boat animation scene -->
-      <div id="dest-boat-scene" style="height:130px;border-radius:16px;overflow:hidden;position:relative;margin-bottom:14px;"></div>
-      <!-- Stats row -->
+      <div id="dest-boat-scene" style="height:170px;border-radius:16px;overflow:hidden;position:relative;margin-bottom:12px;"></div>
+      <!-- Stats row (compact) -->
       <div style="display:flex;text-align:center;">
         <div style="flex:1;">
-          <div id="dest-stat-active" style="font-size:20px;font-weight:700;color:#1E3A5F;line-height:1;"></div>
-          <div style="font-size:11px;color:#8A9BAA;margin-top:3px;line-height:1.3;">Active<br>Currents</div>
+          <div id="dest-stat-active" style="font-size:16px;font-weight:700;color:#1E3A5F;line-height:1;"></div>
+          <div style="font-size:10px;color:#8A9BAA;margin-top:2px;line-height:1.3;">Active<br>Currents</div>
         </div>
         <div style="flex:1;border-left:1px solid rgba(30,58,95,0.07);">
-          <div id="dest-stat-done" style="font-size:20px;font-weight:700;color:#1E3A5F;line-height:1;"></div>
-          <div style="font-size:11px;color:#8A9BAA;margin-top:3px;line-height:1.3;">Currents<br>Completed</div>
+          <div id="dest-stat-done" style="font-size:16px;font-weight:700;color:#1E3A5F;line-height:1;"></div>
+          <div style="font-size:10px;color:#8A9BAA;margin-top:2px;line-height:1.3;">Currents<br>Completed</div>
         </div>
       </div>
     </div>
@@ -6328,6 +6331,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     const pctLabel = document.getElementById('dest-pct-label');
     if (pctLabel) pctLabel.textContent = taskPct + '%';
+    const tasksLabel = document.getElementById('dest-tasks-label');
+    if (tasksLabel) tasksLabel.textContent = doneTasks + ' / ' + totalTasks + ' tasks';
     const statActive = document.getElementById('dest-stat-active');
     if (statActive) statActive.textContent = activeCurrents;
     const statDone = document.getElementById('dest-stat-done');
@@ -6370,8 +6375,8 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           <div style="position:absolute;top:8px;left:46%;width:40px;height:15px;background:rgba(255,255,255,0.65);border-radius:20px;"></div>
           <div style="position:absolute;top:49%;left:0;right:0;height:2px;background:rgba(255,255,255,0.18);border-radius:1px;"></div>
           <div style="position:absolute;top:60%;left:4%;right:12%;height:1.5px;background:rgba(255,255,255,0.12);border-radius:1px;"></div>
-          <div style="position:absolute;top:15px;right:3%;">${islandSvg}</div>
-          <div id="dest-boat-el" style="position:absolute;top:57px;left:${boatLeftPct}%;transform:translateX(-50%);transition:left 1.4s cubic-bezier(0.4,0,0.2,1);">${boatSvg}</div>
+          <div style="position:absolute;top:calc(47% - 47px);right:3%;">${islandSvg}</div>
+          <div id="dest-boat-el" style="position:absolute;top:calc(47% - 23px);left:${boatLeftPct}%;transform:translateX(-50%);transition:left 1.4s cubic-bezier(0.4,0,0.2,1);">${boatSvg}</div>
         </div>`;
     }
 
@@ -6404,6 +6409,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
                 <div style="flex:1;height:4px;background:#EEF2F5;border-radius:2px;">
                   <div style="height:4px;width:${tPct}%;background:${barColor};border-radius:2px;transition:width 0.4s ease;"></div>
                 </div>
+                <span style="font-size:11px;color:#8A9BAA;white-space:nowrap;">${tDone}/${tasks.length}</span>
                 <span style="font-size:12px;font-weight:600;color:${isDone ? '#4CAF50' : tPct > 0 ? '#1E3A5F' : '#C0CDD5'};white-space:nowrap;">${tPct}%</span>
               </div>
             </div>
