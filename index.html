@@ -1961,46 +1961,71 @@
 
 <!-- PAGE: DESTINATION DETAIL -->
 <div class="page" id="page-destination">
-  <header class="header" style="position:relative;justify-content:center;">
+  <header class="header" style="position:relative;justify-content:center;padding-bottom:12px;">
     <button class="back-btn" onclick="goBackFromDestination()" style="position:absolute;left:20px;">
       <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9l8 8" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
-    <span id="dest-header-name" style="font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;letter-spacing:0.04em;color:#1E3A5F;"></span>
     <button onclick="openEditDestination()" style="position:absolute;right:20px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:#3EC6D8;cursor:pointer;padding:0;">Edit</button>
   </header>
-  <div style="padding:0 20px 100px;">
-    <!-- Banner -->
-    <div id="dest-banner" style="border-radius:18px;margin:16px 0 20px;padding:24px 22px 20px;position:relative;overflow:hidden;">
-      <div id="dest-banner-name" style="font-size:26px;font-weight:700;color:white;letter-spacing:-0.01em;margin-bottom:16px;"></div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="flex:1;height:5px;background:rgba(255,255,255,0.3);border-radius:3px;">
-          <div id="dest-banner-bar" style="height:5px;background:white;border-radius:3px;width:0%;transition:width 0.4s ease;"></div>
+  <div style="padding:0 0 120px;overflow-y:auto;">
+
+    <!-- Hero -->
+    <div style="text-align:center;padding:0 24px 22px;">
+      <div id="dest-hero-icon" style="width:88px;height:88px;border-radius:24px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:46px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.12);"></div>
+      <div id="dest-hero-name" style="font-size:26px;font-weight:700;color:#1E3A5F;letter-spacing:-0.02em;line-height:1.2;margin-bottom:10px;"></div>
+      <div id="dest-hero-desc" style="font-size:14px;color:#5A6A7A;line-height:1.6;max-width:300px;margin:0 auto;"></div>
+    </div>
+
+    <!-- Progress card -->
+    <div style="margin:0 18px 20px;background:white;border-radius:22px;padding:18px;box-shadow:0 2px 18px rgba(30,58,95,0.09);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
+        <span style="font-size:14px;font-weight:600;color:#1E3A5F;letter-spacing:0.02em;">Overall Progress</span>
+        <span id="dest-pct-label" style="font-size:18px;font-weight:700;color:#4E2CC7;"></span>
+      </div>
+      <!-- Boat animation scene -->
+      <div id="dest-boat-scene" style="height:130px;border-radius:16px;overflow:hidden;position:relative;margin-bottom:14px;"></div>
+      <!-- Stats row -->
+      <div style="display:flex;text-align:center;">
+        <div style="flex:1;">
+          <div id="dest-stat-active" style="font-size:20px;font-weight:700;color:#1E3A5F;line-height:1;"></div>
+          <div style="font-size:11px;color:#8A9BAA;margin-top:3px;line-height:1.3;">Active<br>Currents</div>
         </div>
-        <span id="dest-banner-count" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;"></span>
+        <div style="flex:1;border-left:1px solid rgba(30,58,95,0.07);border-right:1px solid rgba(30,58,95,0.07);">
+          <div id="dest-stat-tasks" style="font-size:20px;font-weight:700;color:#1E3A5F;line-height:1;"></div>
+          <div style="font-size:11px;color:#8A9BAA;margin-top:3px;line-height:1.3;">Tasks</div>
+        </div>
+        <div style="flex:1;">
+          <div id="dest-stat-done" style="font-size:20px;font-weight:700;color:#1E3A5F;line-height:1;"></div>
+          <div style="font-size:11px;color:#8A9BAA;margin-top:3px;line-height:1.3;">Currents<br>Completed</div>
+        </div>
       </div>
     </div>
-    <!-- Tasks header -->
-    <div class="cp-tasks-header">
-      <div class="cp-tasks-title">TASKS</div>
-      <div style="display:flex;gap:8px;">
-        <button class="cp-add-btn" onclick="openAddCurrentToDest()">+ From Currents</button>
-        <button class="cp-add-btn" onclick="openAddDestItem()">+ Add Task</button>
-      </div>
+
+    <!-- Projects list -->
+    <div style="padding:0 18px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:#8A9BAA;margin-bottom:10px;">PROJECTS IN THIS DESTINATION</div>
+      <div id="dest-items-list" style="background:white;border-radius:18px;overflow:hidden;box-shadow:0 2px 14px rgba(30,58,95,0.07);margin-bottom:12px;"></div>
+      <button onclick="openAddCurrentToDest()" style="width:100%;padding:15px;background:none;border:1.5px solid rgba(78,44,199,0.22);border-radius:14px;font-size:15px;font-weight:600;color:#4E2CC7;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">+ Add Project to Destination</button>
+      <!-- Manual tasks (if any) -->
+      <div id="dest-manual-items"></div>
+      <button onclick="openAddDestItem()" style="width:100%;padding:12px;background:none;border:1.5px dashed rgba(30,58,95,0.15);border-radius:14px;font-size:14px;font-weight:500;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add Manual Task</button>
     </div>
-    <!-- Task list -->
-    <div class="cp-task-list" id="dest-items-list"></div>
   </div>
 </div>
 
 <!-- CREATE / EDIT DESTINATION MODAL -->
 <div class="modal-overlay" id="destModal" onclick="if(event.target===this)closeDestModal()">
-  <div class="modal-card">
+  <div class="modal-card" style="max-height:88vh;overflow-y:auto;">
     <button class="modal-close" onclick="closeDestModal()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div id="dest-modal-title" class="modal-title">NEW DESTINATION</div>
     <div class="modal-field-label">NAME</div>
-    <input class="modal-input" id="dest-name-input" type="text" placeholder="e.g. Album Release" style="margin-bottom:20px;"/>
+    <input class="modal-input" id="dest-name-input" type="text" placeholder="e.g. Album Release" style="margin-bottom:16px;"/>
+    <div class="modal-field-label">ICON (emoji)</div>
+    <input class="modal-input" id="dest-emoji-input" type="text" placeholder="e.g. 🏝️" maxlength="4" style="margin-bottom:16px;font-size:24px;text-align:center;"/>
+    <div class="modal-field-label">DESCRIPTION</div>
+    <textarea class="modal-input" id="dest-desc-input" placeholder="What is this destination about?" rows="3" style="margin-bottom:16px;resize:none;line-height:1.5;"></textarea>
     <div class="modal-field-label">COLOR</div>
     <div id="dest-color-swatches" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;"></div>
     <button type="button" class="modal-save-btn" id="dest-save-btn" onclick="saveDestination()">CREATE DESTINATION</button>
@@ -6252,13 +6277,10 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     if (!dest) return;
     _currentDestId = id;
     _destCompletedOpen = false;
-    const headerName = document.getElementById('dest-header-name');
-    if (headerName) headerName.textContent = dest.name;
     renderDestinationDetail();
     showPage('destination');
   }
 
-  var _destCompletedOpen = false;
   var _destItemOpenRow = null;
 
   function destItemIsDone(item) {
@@ -6273,95 +6295,153 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
     if (!dest) return;
 
+    // ── Hero ──
+    const heroIcon = document.getElementById('dest-hero-icon');
+    if (heroIcon) {
+      if (dest.emoji) {
+        heroIcon.style.background = dest.color + '22';
+        heroIcon.style.border = '2px solid ' + dest.color + '44';
+        heroIcon.innerHTML = `<span style="font-size:46px;line-height:1;">${dest.emoji}</span>`;
+      } else {
+        heroIcon.style.background = dest.color;
+        heroIcon.style.border = 'none';
+        heroIcon.innerHTML = `<span style="font-size:36px;font-weight:700;color:white;letter-spacing:-0.03em;">${dest.name.slice(0,2).toUpperCase()}</span>`;
+      }
+    }
+    const heroName = document.getElementById('dest-hero-name');
+    if (heroName) heroName.textContent = dest.name;
+    const heroDesc = document.getElementById('dest-hero-desc');
+    if (heroDesc) heroDesc.textContent = dest.description || '';
+
+    // ── Progress stats ──
+    const linkedItems = dest.items.filter(i => i.currentId);
+    const manualItems = dest.items.filter(i => !i.currentId);
+    const activeCurrents = linkedItems.filter(i => !destItemIsDone(i)).length;
+    const completedCurrents = linkedItems.filter(destItemIsDone).length;
+    let totalTasks = 0, doneTasks = 0;
+    linkedItems.forEach(i => {
+      const tasks = getTasksForCurrent(i.currentId);
+      totalTasks += tasks.length;
+      doneTasks  += tasks.filter(t => t.done).length;
+    });
     const total = dest.items.length;
     const done  = dest.items.filter(destItemIsDone).length;
     const pct   = total ? Math.round(done / total * 100) : 0;
 
-    const banner = document.getElementById('dest-banner');
-    if (banner) banner.style.background = dest.color;
-    const bannerName = document.getElementById('dest-banner-name');
-    if (bannerName) bannerName.textContent = dest.name;
-    const bar = document.getElementById('dest-banner-bar');
-    if (bar) bar.style.width = pct + '%';
-    const count = document.getElementById('dest-banner-count');
-    if (count) count.textContent = done + ' / ' + total;
+    const pctLabel = document.getElementById('dest-pct-label');
+    if (pctLabel) pctLabel.textContent = pct + '%';
+    const statActive = document.getElementById('dest-stat-active');
+    if (statActive) statActive.textContent = activeCurrents;
+    const statTasks = document.getElementById('dest-stat-tasks');
+    if (statTasks) statTasks.textContent = doneTasks + ' / ' + totalTasks;
+    const statDone = document.getElementById('dest-stat-done');
+    if (statDone) statDone.textContent = completedCurrents;
 
+    // ── Boat scene ──
+    const scene = document.getElementById('dest-boat-scene');
+    if (scene) {
+      const boatLeftPct = 5 + (pct / 100) * 50;
+      const islandSvg = `<svg viewBox="0 0 110 80" width="105" height="76" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="55" cy="72" rx="46" ry="11" fill="#F5D060"/>
+        <ellipse cx="55" cy="64" rx="34" ry="10" fill="#6CC96E"/>
+        <path d="M40 63 Q36 50 30 34" stroke="#7A5010" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="28" cy="31" rx="13" ry="5" fill="#3DA840" transform="rotate(-25 28 31)"/>
+        <ellipse cx="24" cy="27" rx="12" ry="4" fill="#4DC050" transform="rotate(15 24 27)"/>
+        <ellipse cx="31" cy="26" rx="11" ry="4" fill="#3DA840" transform="rotate(-45 31 26)"/>
+        <path d="M70 63 Q76 50 82 33" stroke="#7A5010" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="84" cy="30" rx="13" ry="5" fill="#3DA840" transform="rotate(25 84 30)"/>
+        <ellipse cx="88" cy="26" rx="12" ry="4" fill="#4DC050" transform="rotate(-15 88 26)"/>
+        <ellipse cx="81" cy="25" rx="11" ry="4" fill="#3DA840" transform="rotate(45 81 25)"/>
+      </svg>`;
+      const boatSvg = `<svg viewBox="0 0 78 32" width="74" height="30" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6,24 L12,13 L58,13 L64,24 Q35,32 6,24 Z" fill="#F5EDD0" stroke="#D4C07A" stroke-width="0.8"/>
+        <path d="M22,13 L27,6 L50,6 L53,13 Z" fill="#AED8F0" stroke="#88C0D8" stroke-width="0.6" opacity="0.95"/>
+        <rect x="11" y="20" width="50" height="3" rx="1.5" fill="${dest.color}" opacity="0.7"/>
+        <path d="M3,26 Q35,30 72,26" stroke="white" stroke-width="1.5" fill="none" opacity="0.35"/>
+      </svg>`;
+      scene.innerHTML = `
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,#87CEEB 0%,#B8EAFB 44%,#4EC9D8 44%,#2BABB8 100%);">
+          <div style="position:absolute;top:7px;left:8%;width:54px;height:20px;background:rgba(255,255,255,0.85);border-radius:20px;"></div>
+          <div style="position:absolute;top:3px;left:11%;width:80px;height:22px;background:rgba(255,255,255,0.75);border-radius:20px;"></div>
+          <div style="position:absolute;top:9px;left:45%;width:42px;height:16px;background:rgba(255,255,255,0.65);border-radius:20px;"></div>
+          <div style="position:absolute;top:46%;left:0;right:0;height:2px;background:rgba(255,255,255,0.2);border-radius:1px;"></div>
+          <div style="position:absolute;top:58%;left:5%;right:15%;height:1.5px;background:rgba(255,255,255,0.15);border-radius:1px;"></div>
+          <div style="position:absolute;bottom:-4px;right:5%;">${islandSvg}</div>
+          <div id="dest-boat-el" style="position:absolute;bottom:38%;left:${boatLeftPct}%;transform:translateX(-50%);transition:left 1.4s cubic-bezier(0.4,0,0.2,1);">${boatSvg}</div>
+        </div>`;
+    }
+
+    // ── Project cards (linked currents) ──
     const list = document.getElementById('dest-items-list');
-    if (!list) return;
-
-    if (!total) {
-      list.innerHTML = '<div style="padding:20px 0;text-align:center;color:#8A9BAA;font-size:15px;">No tasks yet — add one below.</div>';
-      return;
-    }
-
-    const checkSvg = `<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-    function renderItem(item, isDone) {
-      if (item.currentId) {
-        const current = DB_CURRENTS.find(c => c.id === item.currentId);
-        if (!current) {
-          return `<div class="cp-task-item" style="opacity:0.4;">
-            <span class="cp-task-name ${isDone ? 'done' : ''}">${item.name}</span>
-          </div>`;
-        }
-        const tasks   = getTasksForCurrent(item.currentId);
-        const tDone   = tasks.filter(t => t.done).length;
-        const tPct    = tasks.length ? Math.round(tDone / tasks.length * 100) : 0;
-        return `<div class="current-card" onclick="openCurrentFromDest('${item.currentId}')" style="cursor:pointer;margin-bottom:12px;${isDone ? 'opacity:0.55;' : ''}">
-          <div class="current-cat-icon">${getCurrentIcon(current, 24)}</div>
-          <div class="current-info" style="flex:1;">
-            <div class="current-cat">${current.category || ''}</div>
-            <div class="current-name">${current.name}</div>
-            <div style="margin-top:7px;display:flex;align-items:center;gap:6px;">
-              <div style="flex:1;height:3px;background:rgba(30,58,95,0.1);border-radius:2px;">
-                <div style="height:3px;background:${dest.color};border-radius:2px;width:${tPct}%;transition:width 0.4s ease;"></div>
+    if (list) {
+      if (!linkedItems.length) {
+        list.innerHTML = `<div style="padding:20px;text-align:center;color:#8A9BAA;font-size:15px;">No projects yet — add one below.</div>`;
+      } else {
+        list.innerHTML = linkedItems.map((item, idx) => {
+          const current = DB_CURRENTS.find(c => c.id === item.currentId);
+          if (!current) return '';
+          const tasks = getTasksForCurrent(item.currentId);
+          const tDone = tasks.filter(t => t.done).length;
+          const tPct  = tasks.length ? Math.round(tDone / tasks.length * 100) : 0;
+          const isDone = tPct === 100 && tasks.length > 0;
+          const statusColor = isDone ? '#4CAF50' : tPct > 0 ? dest.color : '#C0CDD5';
+          const statusText  = isDone ? 'Done' : tPct > 0 ? 'In Progress' : 'Not Started';
+          const barColor    = isDone ? '#4CAF50' : tPct > 0 ? dest.color : '#E0E8EF';
+          const isLast = idx === linkedItems.length - 1;
+          return `<div onclick="openCurrentFromDest('${item.currentId}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:${isLast ? 'none' : '1px solid rgba(30,58,95,0.06)'};cursor:pointer;">
+            <div style="width:52px;height:52px;border-radius:14px;background:rgba(30,58,95,0.05);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${getCurrentIcon(current, 30)}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:3px;">${current.name}</div>
+              <div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;">
+                <div style="width:7px;height:7px;border-radius:50%;background:${statusColor};flex-shrink:0;"></div>
+                <span style="font-size:12px;color:#8A9BAA;">${statusText}</span>
               </div>
-              <span style="font-size:13px;color:#8A9BAA;white-space:nowrap;">${tPct}%</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;height:4px;background:#EEF2F5;border-radius:2px;">
+                  <div style="height:4px;width:${tPct}%;background:${barColor};border-radius:2px;transition:width 0.4s ease;"></div>
+                </div>
+                <span style="font-size:12px;font-weight:600;color:${isDone ? '#4CAF50' : tPct > 0 ? '#1E3A5F' : '#C0CDD5'};white-space:nowrap;">${tPct}%</span>
+              </div>
             </div>
-            <div style="font-size:13px;color:#8A9BAA;margin-top:3px;">${tDone} / ${tasks.length} tasks</div>
-          </div>
-          <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;margin-left:6px;"><path d="M1 1l6 6-6 6"/></svg>
-        </div>`;
+            <svg width="7" height="13" viewBox="0 0 7 13" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;"><path d="M1 1l5 5.5-5 5.5"/></svg>
+          </div>`;
+        }).join('');
       }
-      // Manual checkbox item
-      if (isDone) {
-        return `<div class="cp-task-item">
-          <div class="cp-checkbox checked" style="background:${dest.color};border-color:${dest.color};" onclick="toggleDestItem('${dest.id}','${item.id}')">${checkSvg}</div>
-          <span class="cp-task-name done">${item.name}</span>
-        </div>`;
-      }
-      return `<div class="cp-task-swipe-wrap" data-di="${item.id}">
-        <div class="cp-task-swipe-inner">
-          <div class="cp-task-item">
-            <div class="cp-checkbox" onclick="event.stopPropagation();toggleDestItem('${dest.id}','${item.id}')"></div>
-            <span class="cp-task-name">${item.name}</span>
-          </div>
-          <div class="cp-task-swipe-actions" style="flex-basis:56px;">
-            <button class="cp-task-swipe-delete-btn" onclick="deleteDestItem('${dest.id}','${item.id}')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05C5C" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>`;
     }
 
-    const incomplete = dest.items.filter(i => !destItemIsDone(i));
-    const completed  = dest.items.filter(destItemIsDone);
-
-    list.innerHTML = incomplete.map(i => renderItem(i, false)).join('');
-
-    if (completed.length) {
-      list.innerHTML += `
-        <div onclick="toggleDestCompleted()" style="display:flex;align-items:center;justify-content:space-between;padding:14px 4px 8px;cursor:pointer;">
-          <span style="font-size:12px;font-weight:700;letter-spacing:0.1em;color:#8A9BAA;">VIEW COMPLETED (${completed.length})</span>
-          <svg id="dest-completed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A9BAA" stroke-width="2" stroke-linecap="round" style="transition:transform 0.2s;${_destCompletedOpen ? 'transform:rotate(180deg)' : ''}"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <div id="dest-completed-list" style="display:${_destCompletedOpen ? 'block' : 'none'};">
-          ${completed.map(i => renderItem(i, true)).join('')}
-        </div>`;
+    // ── Manual items ──
+    const manualSection = document.getElementById('dest-manual-items');
+    if (manualSection) {
+      if (!manualItems.length) {
+        manualSection.innerHTML = '';
+      } else {
+        const checkSvg = `<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        manualSection.innerHTML = `
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:#8A9BAA;margin:16px 0 10px;">TASKS</div>
+          <div class="cp-task-list" style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 14px rgba(30,58,95,0.07);">
+            ${manualItems.map(item => item.done
+              ? `<div class="cp-task-item" style="padding:13px 16px;">
+                  <div class="cp-checkbox checked" style="background:${dest.color};border-color:${dest.color};" onclick="toggleDestItem('${dest.id}','${item.id}')">${checkSvg}</div>
+                  <span class="cp-task-name done">${item.name}</span>
+                </div>`
+              : `<div class="cp-task-swipe-wrap" data-di="${item.id}">
+                  <div class="cp-task-swipe-inner">
+                    <div class="cp-task-item" style="padding:13px 16px;">
+                      <div class="cp-checkbox" onclick="event.stopPropagation();toggleDestItem('${dest.id}','${item.id}')"></div>
+                      <span class="cp-task-name">${item.name}</span>
+                    </div>
+                    <div class="cp-task-swipe-actions" style="flex-basis:56px;">
+                      <button class="cp-task-swipe-delete-btn" onclick="deleteDestItem('${dest.id}','${item.id}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05C5C" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>`
+            ).join('')}
+          </div>`;
+        initDestItemSwipe();
+      }
     }
-
-    initDestItemSwipe();
   }
 
   function toggleDestCompleted() {
@@ -6432,10 +6512,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   // ── Create / Edit Destination ──
   function openAddDestination() {
-    _destFromEditWave = false;
+    _destFromEditWave = false; _destFromCoverModal = false;
     _editingDestId = null;
     document.getElementById('dest-modal-title').textContent = 'NEW DESTINATION';
     document.getElementById('dest-name-input').value = '';
+    document.getElementById('dest-emoji-input').value = '';
+    document.getElementById('dest-desc-input').value = '';
     document.getElementById('dest-save-btn').textContent = 'CREATE DESTINATION';
     document.getElementById('dest-delete-btn').style.display = 'none';
     renderDestColorSwatches('#4E2CC7');
@@ -6444,12 +6526,14 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function openEditDestination() {
-    _destFromEditWave = false;
+    _destFromEditWave = false; _destFromCoverModal = false;
     const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
     if (!dest) return;
     _editingDestId = _currentDestId;
     document.getElementById('dest-modal-title').textContent = 'EDIT DESTINATION';
     document.getElementById('dest-name-input').value = dest.name;
+    document.getElementById('dest-emoji-input').value = dest.emoji || '';
+    document.getElementById('dest-desc-input').value = dest.description || '';
     document.getElementById('dest-save-btn').textContent = 'SAVE CHANGES';
     document.getElementById('dest-delete-btn').style.display = 'block';
     renderDestColorSwatches(dest.color);
@@ -6472,16 +6556,18 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function saveDestination() {
-    const name = document.getElementById('dest-name-input').value.trim();
+    const name  = document.getElementById('dest-name-input').value.trim();
+    const emoji = document.getElementById('dest-emoji-input').value.trim();
+    const desc  = document.getElementById('dest-desc-input').value.trim();
     if (!name) { document.getElementById('dest-name-input').focus(); return; }
     const wasEditing = _editingDestId;
     if (_editingDestId) {
       const dest = DB_DESTINATIONS.find(d => d.id === _editingDestId);
-      if (dest) { dest.name = name; dest.color = _selectedDestColor; }
+      if (dest) { dest.name = name; dest.color = _selectedDestColor; dest.emoji = emoji; dest.description = desc; }
     } else {
       let wave = DB_WAVES.find(w => w.name === currentWaveDetailName);
       if (!wave && editingWaveId) wave = DB_WAVES.find(w => w.id === editingWaveId);
-      DB_DESTINATIONS.push({ id: 'dest_' + Date.now(), name, color: _selectedDestColor, items: [], waveId: wave ? wave.id : null });
+      DB_DESTINATIONS.push({ id: 'dest_' + Date.now(), name, color: _selectedDestColor, emoji, description: desc, items: [], waveId: wave ? wave.id : null });
     }
     saveDests();
     const fromEdit  = _destFromEditWave;
