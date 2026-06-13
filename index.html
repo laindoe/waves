@@ -6229,7 +6229,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const waveDests = DB_DESTINATIONS.filter(d => d.waveId === wave.id);
     const cards = waveDests.map(dest => {
       const total = dest.items.length;
-      const done  = dest.items.filter(i => i.done).length;
+      const done  = dest.items.filter(destItemIsDone).length;
       const pct   = total ? Math.round(done / total * 100) : 0;
       return `
         <div onclick="openDestination('${dest.id}')" style="background:${dest.color};border-radius:18px;padding:22px 20px 16px;margin-bottom:12px;cursor:pointer;">
@@ -6261,11 +6261,20 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   var _destCompletedOpen = false;
   var _destItemOpenRow = null;
 
+  function destItemIsDone(item) {
+    if (item.currentId) {
+      const tasks = getTasksForCurrent(item.currentId);
+      return tasks.length > 0 && tasks.every(t => t.done);
+    }
+    return item.done;
+  }
+
   function renderDestinationDetail() {
     const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
     if (!dest) return;
+
     const total = dest.items.length;
-    const done  = dest.items.filter(i => i.done).length;
+    const done  = dest.items.filter(destItemIsDone).length;
     const pct   = total ? Math.round(done / total * 100) : 0;
 
     const banner = document.getElementById('dest-banner');
@@ -6280,31 +6289,52 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
     const list = document.getElementById('dest-items-list');
     if (!list) return;
 
-    const incomplete = dest.items.filter(i => !i.done);
-    const completed  = dest.items.filter(i => i.done);
-    const checkSvg = `<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-    function itemIcon(item) {
-      const linked = item.currentId ? DB_CURRENTS.find(c => c.id === item.currentId) : null;
-      return linked ? `<div style="width:28px;height:28px;border-radius:8px;background:rgba(30,58,95,0.07);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${getCurrentIcon(linked, 17)}</div>` : '';
-    }
-
     if (!total) {
       list.innerHTML = '<div style="padding:20px 0;text-align:center;color:#8A9BAA;font-size:15px;">No tasks yet — add one below.</div>';
       return;
     }
 
-    list.innerHTML = incomplete.map(item => {
-      const hasLink = !!item.currentId;
-      const rowClick = hasLink ? `onclick="openCurrentFromDest('${item.currentId}')"` : '';
-      const chevron  = hasLink ? `<svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l6 6-6 6"/></svg>` : '';
+    const checkSvg = `<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    function renderItem(item, isDone) {
+      if (item.currentId) {
+        const current = DB_CURRENTS.find(c => c.id === item.currentId);
+        if (!current) {
+          return `<div class="cp-task-item" style="opacity:0.4;">
+            <span class="cp-task-name ${isDone ? 'done' : ''}">${item.name}</span>
+          </div>`;
+        }
+        const tasks   = getTasksForCurrent(item.currentId);
+        const tDone   = tasks.filter(t => t.done).length;
+        const tPct    = tasks.length ? Math.round(tDone / tasks.length * 100) : 0;
+        return `<div class="current-card" onclick="openCurrentFromDest('${item.currentId}')" style="cursor:pointer;margin-bottom:12px;${isDone ? 'opacity:0.55;' : ''}">
+          <div class="current-cat-icon">${getCurrentIcon(current, 24)}</div>
+          <div class="current-info" style="flex:1;">
+            <div class="current-cat">${current.category || ''}</div>
+            <div class="current-name">${current.name}</div>
+            <div style="margin-top:7px;display:flex;align-items:center;gap:6px;">
+              <div style="flex:1;height:3px;background:rgba(30,58,95,0.1);border-radius:2px;">
+                <div style="height:3px;background:${dest.color};border-radius:2px;width:${tPct}%;transition:width 0.4s ease;"></div>
+              </div>
+              <span style="font-size:13px;color:#8A9BAA;white-space:nowrap;">${tPct}%</span>
+            </div>
+            <div style="font-size:13px;color:#8A9BAA;margin-top:3px;">${tDone} / ${tasks.length} tasks</div>
+          </div>
+          <svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C0CDD5" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;margin-left:6px;"><path d="M1 1l6 6-6 6"/></svg>
+        </div>`;
+      }
+      // Manual checkbox item
+      if (isDone) {
+        return `<div class="cp-task-item">
+          <div class="cp-checkbox checked" style="background:${dest.color};border-color:${dest.color};" onclick="toggleDestItem('${dest.id}','${item.id}')">${checkSvg}</div>
+          <span class="cp-task-name done">${item.name}</span>
+        </div>`;
+      }
       return `<div class="cp-task-swipe-wrap" data-di="${item.id}">
         <div class="cp-task-swipe-inner">
-          <div class="cp-task-item" ${rowClick} style="${hasLink ? 'cursor:pointer;' : ''}">
+          <div class="cp-task-item">
             <div class="cp-checkbox" onclick="event.stopPropagation();toggleDestItem('${dest.id}','${item.id}')"></div>
-            ${itemIcon(item)}
             <span class="cp-task-name">${item.name}</span>
-            ${chevron}
           </div>
           <div class="cp-task-swipe-actions" style="flex-basis:56px;">
             <button class="cp-task-swipe-delete-btn" onclick="deleteDestItem('${dest.id}','${item.id}')">
@@ -6313,7 +6343,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           </div>
         </div>
       </div>`;
-    }).join('');
+    }
+
+    const incomplete = dest.items.filter(i => !destItemIsDone(i));
+    const completed  = dest.items.filter(destItemIsDone);
+
+    list.innerHTML = incomplete.map(i => renderItem(i, false)).join('');
 
     if (completed.length) {
       list.innerHTML += `
@@ -6322,12 +6357,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           <svg id="dest-completed-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A9BAA" stroke-width="2" stroke-linecap="round" style="transition:transform 0.2s;${_destCompletedOpen ? 'transform:rotate(180deg)' : ''}"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div id="dest-completed-list" style="display:${_destCompletedOpen ? 'block' : 'none'};">
-          ${completed.map(item => `
-            <div class="cp-task-item">
-              <div class="cp-checkbox checked" style="background:${dest.color};border-color:${dest.color};" onclick="toggleDestItem('${dest.id}','${item.id}')">${checkSvg}</div>
-              ${itemIcon(item)}
-              <span class="cp-task-name done">${item.name}</span>
-            </div>`).join('')}
+          ${completed.map(i => renderItem(i, true)).join('')}
         </div>`;
     }
 
