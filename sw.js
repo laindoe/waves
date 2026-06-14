@@ -1,4 +1,4 @@
-const CACHE_NAME = 'waves-v170';
+const CACHE_NAME = 'waves-v171';
 const ASSETS = [
   '/',
   '/index.html',

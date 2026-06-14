@@ -6280,6 +6280,80 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   var _editingDestId = null;
   var _currentDestId = null;
+  var _destDrag = { active: false, id: null, clone: null, origEl: null, origTop: 0, touchStartY: 0 };
+
+  function destDragStart(e, itemId) {
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    const el = e.currentTarget.closest('[data-dd-id]');
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    _destDrag.active = true;
+    _destDrag.id = itemId;
+    _destDrag.origEl = el;
+    _destDrag.origTop = rect.top;
+    _destDrag.touchStartY = touch.clientY;
+    _destDrag.clone = el.cloneNode(true);
+    Object.assign(_destDrag.clone.style, {
+      position: 'fixed', left: rect.left + 'px', top: rect.top + 'px',
+      width: rect.width + 'px', zIndex: '9999', pointerEvents: 'none',
+      opacity: '0.92', boxShadow: '0 10px 36px rgba(0,0,0,0.18)',
+      borderRadius: '14px', background: 'white', transition: 'none'
+    });
+    document.body.appendChild(_destDrag.clone);
+    el.style.opacity = '0.25';
+    document.addEventListener('touchmove', _ddMove, { passive: false });
+    document.addEventListener('touchend', _ddEnd);
+  }
+
+  function _ddMove(e) {
+    if (!_destDrag.active) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    _destDrag.clone.style.top = (_destDrag.origTop + (touch.clientY - _destDrag.touchStartY)) + 'px';
+    const items = [...document.querySelectorAll('#dest-items-list [data-dd-id]')];
+    items.forEach(it => it.style.borderTop = '');
+    const over = items.find(it => {
+      if (it === _destDrag.origEl) return false;
+      const r = it.getBoundingClientRect();
+      return touch.clientY >= r.top && touch.clientY < r.bottom;
+    });
+    if (over) over.style.borderTop = '2.5px solid #4E2CC7';
+  }
+
+  function _ddEnd(e) {
+    if (!_destDrag.active) return;
+    const touch = e.changedTouches[0];
+    const items = [...document.querySelectorAll('#dest-items-list [data-dd-id]')];
+    items.forEach(it => it.style.borderTop = '');
+    const over = items.find(it => {
+      if (it === _destDrag.origEl) return false;
+      const r = it.getBoundingClientRect();
+      return touch.clientY >= r.top && touch.clientY < r.bottom;
+    });
+    if (over) {
+      const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
+      if (dest) {
+        const linked = dest.items.filter(i => i.currentId);
+        const manual = dest.items.filter(i => !i.currentId);
+        const from = linked.findIndex(i => i.id === _destDrag.id);
+        const to   = linked.findIndex(i => i.id === over.dataset.ddId);
+        if (from !== -1 && to !== -1 && from !== to) {
+          const [moved] = linked.splice(from, 1);
+          linked.splice(to, 0, moved);
+          dest.items = [...linked, ...manual];
+          saveDests();
+        }
+      }
+    }
+    document.body.removeChild(_destDrag.clone);
+    _destDrag.origEl.style.opacity = '';
+    document.removeEventListener('touchmove', _ddMove);
+    document.removeEventListener('touchend', _ddEnd);
+    _destDrag = { active: false, id: null, clone: null, origEl: null, origTop: 0, touchStartY: 0 };
+    renderDestinationDetail();
+  }
 
   function renderWaveDestinations() {
     const section = document.getElementById('wd-destinations-section');
@@ -6455,13 +6529,21 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
           const statusText  = isDone ? 'Done' : tPct > 0 ? 'In Progress' : 'Not Started';
           const barColor    = isDone ? '#4CAF50' : tPct > 0 ? dest.color : '#E0E8EF';
           const isLast = idx === linkedItems.length - 1;
-          return `<div onclick="openCurrentFromDest('${item.currentId}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:${isLast ? 'none' : '1px solid rgba(30,58,95,0.06)'};cursor:pointer;">
-            <div style="width:52px;height:52px;border-radius:14px;background:rgba(30,58,95,0.05);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${getCurrentIcon(current, 30)}</div>
+          return `<div data-dd-id="${item.id}" onclick="openCurrentFromDest('${item.currentId}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px 12px 10px;border-bottom:${isLast ? 'none' : '1px solid rgba(30,58,95,0.06)'};cursor:pointer;">
+            <div ontouchstart="destDragStart(event,'${item.id}')" style="padding:8px 4px;cursor:grab;touch-action:none;flex-shrink:0;" onclick="event.stopPropagation()">
+              <svg width="12" height="18" viewBox="0 0 12 18" fill="none">
+                <circle cx="4" cy="3" r="1.6" fill="#C0CDD5"/><circle cx="8" cy="3" r="1.6" fill="#C0CDD5"/>
+                <circle cx="4" cy="9" r="1.6" fill="#C0CDD5"/><circle cx="8" cy="9" r="1.6" fill="#C0CDD5"/>
+                <circle cx="4" cy="15" r="1.6" fill="#C0CDD5"/><circle cx="8" cy="15" r="1.6" fill="#C0CDD5"/>
+              </svg>
+            </div>
+            <div style="width:50px;height:50px;border-radius:14px;background:rgba(30,58,95,0.05);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${getCurrentIcon(current, 28)}</div>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:3px;">${current.name}</div>
-              <div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;">
-                <div style="width:7px;height:7px;border-radius:50%;background:${statusColor};flex-shrink:0;"></div>
-                <span style="font-size:12px;color:#8A9BAA;">${statusText}</span>
+              ${current.category ? `<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:#8A9BAA;margin-bottom:2px;">${current.category.toUpperCase()}</div>` : ''}
+              <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:4px;">${current.name}</div>
+              <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+                <div style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;"></div>
+                <span style="font-size:11px;color:#8A9BAA;">${statusText}</span>
               </div>
               <div style="display:flex;align-items:center;gap:8px;">
                 <div style="flex:1;height:4px;background:#EEF2F5;border-radius:2px;">
