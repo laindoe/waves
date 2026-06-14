@@ -2028,9 +2028,6 @@
       <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:#8A9BAA;margin-bottom:10px;">PROJECTS IN THIS DESTINATION</div>
       <div id="dest-items-list" style="background:white;border-radius:18px;overflow:hidden;box-shadow:0 2px 14px rgba(30,58,95,0.07);margin-bottom:12px;"></div>
       <button onclick="openAddCurrentToDest()" style="width:100%;padding:15px;background:none;border:1.5px solid rgba(78,44,199,0.22);border-radius:14px;font-size:15px;font-weight:600;color:#4E2CC7;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">+ Add Project to Destination</button>
-      <!-- Manual tasks (if any) -->
-      <div id="dest-manual-items"></div>
-      <button onclick="openAddDestItem()" style="width:100%;padding:12px;background:none;border:1.5px dashed rgba(30,58,95,0.15);border-radius:14px;font-size:14px;font-weight:500;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add Manual Project</button>
     </div>
   </div>
 </div>
@@ -6670,40 +6667,6 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
             </div>`;
           }
         }).join('');
-      }
-    }
-
-    // ── Manual items ──
-    const manualSection = document.getElementById('dest-manual-items');
-    if (manualSection) {
-      if (!manualItems.length) {
-        manualSection.innerHTML = '';
-      } else {
-        const checkSvg = `<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><polyline points="1 5 4.5 8.5 11 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-        manualSection.innerHTML = `
-          <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:#8A9BAA;margin:16px 0 10px;">TASKS</div>
-          <div class="cp-task-list" style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 14px rgba(30,58,95,0.07);">
-            ${manualItems.map(item => item.done
-              ? `<div class="cp-task-item" style="padding:13px 16px;">
-                  <div class="cp-checkbox checked" style="background:${dest.color};border-color:${dest.color};" onclick="toggleDestItem('${dest.id}','${item.id}')">${checkSvg}</div>
-                  <span class="cp-task-name done">${item.name}</span>
-                </div>`
-              : `<div class="cp-task-swipe-wrap" data-di="${item.id}">
-                  <div class="cp-task-swipe-inner">
-                    <div class="cp-task-item" style="padding:13px 16px;">
-                      <div class="cp-checkbox" onclick="event.stopPropagation();toggleDestItem('${dest.id}','${item.id}')"></div>
-                      <span class="cp-task-name">${item.name}</span>
-                    </div>
-                    <div class="cp-task-swipe-actions" style="flex-basis:56px;">
-                      <button class="cp-task-swipe-delete-btn" onclick="deleteDestItem('${dest.id}','${item.id}')">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05C5C" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>`
-            ).join('')}
-          </div>`;
-        initDestItemSwipe();
       }
     }
   }
