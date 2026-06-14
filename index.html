@@ -6523,20 +6523,12 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
     // ── Progress stats ──
     const linkedItems   = dest.items.filter(i => i.currentId);
-    const manualProjects = dest.items.filter(i => i.manualProject);
-    const manualItems   = dest.items.filter(i => !i.currentId && !i.manualProject);
-    // "Projects" = linked currents + manual projects
-    const allProjects   = [...linkedItems, ...manualProjects];
+    const allProjects   = linkedItems;
     const activeCurrents = allProjects.filter(i => !destItemIsDone(i)).length;
     const completedCurrents = allProjects.filter(destItemIsDone).length;
     let totalTasks = 0, doneTasks = 0;
     linkedItems.forEach(i => {
       const tasks = getTasksForCurrent(i.currentId);
-      totalTasks += tasks.length;
-      doneTasks  += tasks.filter(t => t.done).length;
-    });
-    manualProjects.forEach(i => {
-      const tasks = i.tasks || [];
       totalTasks += tasks.length;
       doneTasks  += tasks.filter(t => t.done).length;
     });
