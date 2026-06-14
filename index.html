@@ -5798,12 +5798,33 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       return;
     }
     current.active = false;
+
+    // Remove from any destination that holds this current
+    let removedFromDestId = null;
+    DB_DESTINATIONS.forEach(d => {
+      const before = d.items.length;
+      d.items = d.items.filter(i => i.currentId !== currentPageCurrentId);
+      if (d.items.length !== before) removedFromDestId = d.id;
+    });
+
     save();
+    if (removedFromDestId) saveDests();
+
     closeEditCurrent();
     renderWavesAccordion();
     renderCurrentsList(DB_WAVES.find(w => w.id === current.waveId)?.name || '');
     renderTodayPage();
-    showPage('wave-detail');
+
+    // If opened from a destination, go back to it; otherwise wave-detail
+    if (_currentFromDestId) {
+      const destId = _currentFromDestId;
+      _currentFromDestId = null;
+      openDestination(destId);
+    } else if (removedFromDestId) {
+      openDestination(removedFromDestId);
+    } else {
+      showPage('wave-detail');
+    }
   }
 
   function confirmDeleteCurrent() {
