@@ -4280,6 +4280,17 @@
       moonEl.textContent = ([trop, sid].filter(Boolean).join(' · ') || '—') + retro;
     }
 
+    // One-time migration: any current linked inside a destination should be inactive
+    (function migrateDestCurrents() {
+      let dirty = false;
+      const destCurrentIds = new Set();
+      DB_DESTINATIONS.forEach(d => d.items.forEach(i => { if (i.currentId) destCurrentIds.add(i.currentId); }));
+      DB_CURRENTS.forEach(c => {
+        if (destCurrentIds.has(c.id) && c.active) { c.active = false; dirty = true; }
+      });
+      if (dirty) save();
+    })();
+
     goToSlide(0);
     renderOceanTabs();
     renderWavesAccordion();
