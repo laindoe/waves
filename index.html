@@ -7177,19 +7177,26 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   function saveFirebaseConfig() {
     var raw = (document.getElementById('fb-config-input').value || '').trim();
-    // Strip const firebaseConfig = ... ; wrapper if pasted from Firebase console
+    if (!raw) { alert('Please paste your Firebase config first.'); return; }
+    // Strip common wrappers from Firebase console
     raw = raw.replace(/^const\s+\w+\s*=\s*/, '').replace(/;?\s*$/, '').trim();
+    // If they pasted just the values without braces, wrap them
+    if (!raw.startsWith('{')) raw = '{' + raw + '}';
+    var cfg;
     try {
-      // Firebase console uses JS object syntax (unquoted keys), not strict JSON.
-      // Use Function() to safely evaluate the object literal.
-      var cfg = (new Function('return (' + raw + ')'))();
-      if (!cfg || !cfg.projectId) throw new Error('Missing projectId');
-      localStorage.setItem('firebase_config', JSON.stringify(cfg));
-      renderFirebaseStatus('connecting');
-      initFirebase();
+      cfg = (new Function('return (' + raw + ')'))();
     } catch(e) {
-      alert('Invalid Firebase config — paste the full { apiKey: "...", ... } object from Firebase console.');
+      alert('Could not read config: ' + e.message + '\n\nPaste the full firebaseConfig object from Firebase console → Project Settings → Your apps.');
+      return;
     }
+    if (!cfg || !cfg.projectId || !cfg.apiKey) {
+      alert('Config is missing projectId or apiKey. Make sure you copied the complete firebaseConfig object.');
+      return;
+    }
+    localStorage.setItem('firebase_config', JSON.stringify(cfg));
+    renderFirebaseStatus('connecting');
+    document.getElementById('fb-config-input').value = '';
+    initFirebase();
   }
 
   function fbSignIn() {
