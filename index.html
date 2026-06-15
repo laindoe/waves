@@ -1901,6 +1901,36 @@
       </div>
     </div>
 
+    <!-- CLOUD SYNC -->
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <div class="settings-section-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        </div>
+        <div>
+          <div class="settings-section-title">CLOUD SYNC (Firebase)</div>
+          <div class="settings-section-sub">Sync your data across devices with your Google account.</div>
+        </div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-row" style="border:none;flex-direction:column;align-items:flex-start;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;width:100%;">
+            <div id="fb-status-dot" style="width:8px;height:8px;border-radius:50%;background:#C0CDD5;flex-shrink:0;"></div>
+            <span id="fb-status-label" style="font-size:15px;color:#1E3A5F;flex:1;">Not configured</span>
+            <button onclick="fbSignOut()" id="fb-signout-btn" style="display:none;background:none;border:none;font-size:14px;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0;">Sign out</button>
+          </div>
+          <textarea id="fb-config-input" rows="5" placeholder='Paste your Firebase config object here&#10;{ apiKey: "...", authDomain: "...", projectId: "...", ... }'
+            style="width:100%;padding:11px 14px;border:1.5px solid rgba(30,58,95,0.15);border-radius:12px;font-size:13px;color:#1E3A5F;font-family:'DM Sans',sans-serif;outline:none;background:#FAFAFA;resize:vertical;"
+            onfocus="this.style.borderColor='#3EC6D8'" onblur="this.style.borderColor='rgba(30,58,95,0.15)'"></textarea>
+          <div style="display:flex;gap:8px;width:100%;">
+            <button onclick="saveFirebaseConfig()" style="flex:1;padding:11px 18px;background:linear-gradient(180deg,#4E2CC7,#3B1FA6);border:none;border-radius:12px;color:white;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Save &amp; Connect</button>
+            <button onclick="fbSignIn()" id="fb-signin-btn" style="display:none;padding:11px 18px;background:none;border:1.5px solid rgba(78,44,199,0.3);border-radius:12px;font-size:15px;font-weight:600;color:#4E2CC7;cursor:pointer;font-family:'DM Sans',sans-serif;">Sign In</button>
+          </div>
+          <div style="font-size:13px;color:#8A9BAA;line-height:1.5;">Config is stored only on this device. Get your Firebase config from the <a href="https://console.firebase.google.com/" target="_blank" style="color:#3EC6D8;text-decoration:none;">Firebase console</a>.</div>
+        </div>
+      </div>
+    </div>
+
     <!-- STORAGE -->
     <div class="settings-section">
       <div class="settings-section-header">
@@ -2364,7 +2394,7 @@
 
   let { waves: DB_WAVES, currents: DB_CURRENTS, tasks: DB_TASKS } = loadData();
 
-  function save() { saveData(DB_WAVES, DB_CURRENTS, DB_TASKS); }
+  function save() { saveData(DB_WAVES, DB_CURRENTS, DB_TASKS); if (typeof pushToFirestore === 'function') pushToFirestore(); }
 
   // ── DERIVED HELPERS ──
   function getWave(id)    { return DB_WAVES.find(w => w.id === id); }
@@ -4308,6 +4338,7 @@
 
     loadDailyEnergy();
     renderMoonCard();
+    if (typeof initFirebase === 'function') initFirebase();
   });
 </script>
 
@@ -6390,6 +6421,7 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   var DB_DESTINATIONS = JSON.parse(localStorage.getItem('dests_data') || '[]');
   function saveDests() {
     try { localStorage.setItem('dests_data', JSON.stringify(DB_DESTINATIONS)); } catch(e) {}
+    if (typeof pushToFirestore === 'function') pushToFirestore();
   }
 
   var DEST_COLORS = [
@@ -7074,6 +7106,148 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   // initial render
   // renderWaveDestinations called when wave detail page opens via openWave()
+</script>
+
+<!-- Firebase cloud sync logic -->
+<script>
+  // ── FIREBASE STATE ──
+  var _fbApp = null;
+  var _fbDb = null;
+  var _fbAuth = null;
+  var _fbUser = null;
+  var _fbSyncEnabled = false;
+
+  function renderFirebaseStatus(override) {
+    var dot = document.getElementById('fb-status-dot');
+    var label = document.getElementById('fb-status-label');
+    var signoutBtn = document.getElementById('fb-signout-btn');
+    var signinBtn = document.getElementById('fb-signin-btn');
+    if (!dot || !label) return;
+    var state = override || (_fbUser ? 'connected' : (_fbAuth ? 'configured' : 'none'));
+    if (state === 'connecting') {
+      dot.style.background = '#F5A623';
+      label.textContent = 'Connecting…';
+      if (signoutBtn) signoutBtn.style.display = 'none';
+      if (signinBtn) signinBtn.style.display = 'none';
+    } else if (state === 'connected' && _fbUser) {
+      dot.style.background = '#27AE60';
+      label.textContent = 'Connected as ' + (_fbUser.email || _fbUser.displayName || 'user');
+      if (signoutBtn) signoutBtn.style.display = '';
+      if (signinBtn) signinBtn.style.display = 'none';
+    } else if (state === 'error') {
+      dot.style.background = '#E74C3C';
+      label.textContent = 'Error — check config';
+      if (signoutBtn) signoutBtn.style.display = 'none';
+      if (signinBtn) signinBtn.style.display = 'none';
+    } else if (state === 'configured') {
+      dot.style.background = '#F5A623';
+      label.textContent = 'Config saved — sign in to sync';
+      if (signoutBtn) signoutBtn.style.display = 'none';
+      if (signinBtn) signinBtn.style.display = '';
+    } else {
+      dot.style.background = '#C0CDD5';
+      label.textContent = 'Not configured';
+      if (signoutBtn) signoutBtn.style.display = 'none';
+      if (signinBtn) signinBtn.style.display = 'none';
+    }
+  }
+
+  function initFirebase() {
+    var raw = localStorage.getItem('firebase_config');
+    if (!raw) return;
+    try {
+      var config = JSON.parse(raw);
+      var fb = window._fb || {};
+      var initializeApp = fb.initializeApp;
+      if (!initializeApp) { setTimeout(initFirebase, 500); return; }
+      _fbApp  = initializeApp(config, 'waves');
+      _fbDb   = fb.getFirestore(_fbApp);
+      _fbAuth = fb.getAuth(_fbApp);
+      fb.onAuthStateChanged(_fbAuth, function(user) {
+        _fbUser = user || null;
+        _fbSyncEnabled = !!user;
+        renderFirebaseStatus();
+        if (user) pullFromFirestore();
+      });
+    } catch(e) {
+      console.error('Firebase init failed', e);
+      renderFirebaseStatus('error');
+    }
+  }
+
+  function saveFirebaseConfig() {
+    var raw = (document.getElementById('fb-config-input').value || '').trim();
+    raw = raw.replace(/^const\s+\w+\s*=\s*/, '').replace(/;?\s*$/, '').trim();
+    try {
+      var cfg = JSON.parse(raw);
+      if (!cfg.projectId) throw new Error('Missing projectId');
+      localStorage.setItem('firebase_config', JSON.stringify(cfg));
+      renderFirebaseStatus('connecting');
+      initFirebase();
+    } catch(e) {
+      alert('Invalid Firebase config — paste the full { apiKey: "...", ... } object from Firebase console.');
+    }
+  }
+
+  function fbSignIn() {
+    if (!_fbAuth) return;
+    var fb = window._fb;
+    fb.signInWithPopup(_fbAuth, new fb.GoogleAuthProvider()).catch(function(e) { alert('Sign-in failed: ' + e.message); });
+  }
+
+  function fbSignOut() {
+    if (!_fbAuth) return;
+    window._fb.signOut(_fbAuth).then(function() {
+      _fbUser = null;
+      _fbSyncEnabled = false;
+      renderFirebaseStatus();
+    });
+  }
+
+  function pushToFirestore() {
+    if (!_fbSyncEnabled || !_fbUser) return;
+    var fb = window._fb;
+    fb.setDoc(fb.doc(_fbDb, 'users', _fbUser.uid, 'data', 'main'), {
+      waves: DB_WAVES,
+      currents: DB_CURRENTS,
+      tasks: DB_TASKS,
+      destinations: DB_DESTINATIONS,
+      updatedAt: Date.now()
+    }).catch(function(e) { console.error('Firestore push failed', e); });
+  }
+
+  function pullFromFirestore() {
+    if (!_fbSyncEnabled || !_fbUser) return;
+    var fb = window._fb;
+    fb.getDoc(fb.doc(_fbDb, 'users', _fbUser.uid, 'data', 'main')).then(function(snap) {
+      if (snap.exists()) {
+        var d = snap.data();
+        if (d.waves)        DB_WAVES        = d.waves;
+        if (d.currents)     DB_CURRENTS     = d.currents;
+        if (d.tasks)        DB_TASKS        = d.tasks;
+        if (d.destinations) DB_DESTINATIONS = d.destinations;
+        save();
+        renderApp();
+      } else {
+        pushToFirestore();
+      }
+    }).catch(function(e) { console.error('Firestore pull failed', e); });
+  }
+
+  function renderApp() {
+    if (typeof renderWavesAccordion === 'function') renderWavesAccordion();
+    if (typeof renderTodayPage === 'function') renderTodayPage();
+    if (typeof renderOceanTabs === 'function') renderOceanTabs();
+    if (typeof renderSettingsMomentum === 'function') renderSettingsMomentum();
+  }
+</script>
+
+<!-- Firebase SDK (modular compat, loaded as module, exposed via window._fb) -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  window._fb = { initializeApp, getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged };
 </script>
 </body>
 </html>
