@@ -6731,8 +6731,11 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
                   <div ontouchstart="destDragStart(event,'${item.id}')" style="padding:8px 4px;cursor:grab;touch-action:none;flex-shrink:0;" onclick="event.stopPropagation()">${gripSvg}</div>
                   <div style="width:50px;height:50px;border-radius:14px;background:rgba(30,58,95,0.05);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${getCurrentIcon(current, 28)}</div>
                   <div style="flex:1;min-width:0;">
-                    ${current.category ? `<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:#8A9BAA;margin-bottom:2px;">${current.category.toUpperCase()}</div>` : ''}
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">${prioBadge}<div style="font-size:15px;font-weight:700;color:#1E3A5F;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${current.name}</div></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+                      ${current.category ? `<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:#8A9BAA;">${current.category.toUpperCase()}</div>` : '<div></div>'}
+                      ${prioBadge}
+                    </div>
+                    <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:4px;">${current.name}</div>
                     <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;"><div style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;"></div><span style="font-size:11px;color:#8A9BAA;">${statusText}</span></div>
                     <div style="display:flex;align-items:center;gap:8px;">
                       <div style="flex:1;height:4px;background:#EEF2F5;border-radius:2px;"><div style="height:4px;width:${tPct}%;background:${barColor};border-radius:2px;transition:width 0.4s ease;"></div></div>
