@@ -7177,10 +7177,13 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   function saveFirebaseConfig() {
     var raw = (document.getElementById('fb-config-input').value || '').trim();
+    // Strip const firebaseConfig = ... ; wrapper if pasted from Firebase console
     raw = raw.replace(/^const\s+\w+\s*=\s*/, '').replace(/;?\s*$/, '').trim();
     try {
-      var cfg = JSON.parse(raw);
-      if (!cfg.projectId) throw new Error('Missing projectId');
+      // Firebase console uses JS object syntax (unquoted keys), not strict JSON.
+      // Use Function() to safely evaluate the object literal.
+      var cfg = (new Function('return (' + raw + ')'))();
+      if (!cfg || !cfg.projectId) throw new Error('Missing projectId');
       localStorage.setItem('firebase_config', JSON.stringify(cfg));
       renderFirebaseStatus('connecting');
       initFirebase();
