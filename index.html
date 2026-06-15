@@ -7169,6 +7169,10 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         renderFirebaseStatus();
         if (user) pullFromFirestore();
       });
+      // Handle redirect sign-in result (iOS Safari uses redirect instead of popup)
+      fb.getRedirectResult(_fbAuth).catch(function(e) {
+        if (e.code !== 'auth/no-auth-event') console.error('Redirect sign-in error:', e.message);
+      });
     } catch(e) {
       console.error('Firebase init failed', e);
       renderFirebaseStatus('error');
@@ -7200,9 +7204,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 
   function fbSignIn() {
-    if (!_fbAuth) return;
+    if (!_fbAuth) { alert('Firebase not initialized yet — wait a moment and try again.'); return; }
     var fb = window._fb;
-    fb.signInWithPopup(_fbAuth, new fb.GoogleAuthProvider()).catch(function(e) { alert('Sign-in failed: ' + e.message); });
+    fb.signInWithRedirect(_fbAuth, new fb.GoogleAuthProvider()).catch(function(e) { alert('Sign-in failed: ' + e.message); });
   }
 
   function fbSignOut() {
@@ -7255,9 +7259,9 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 <!-- Firebase SDK (modular compat, loaded as module, exposed via window._fb) -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-  import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  window._fb = { initializeApp, getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged };
+  import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  window._fb = { initializeApp, getFirestore, doc, setDoc, getDoc, getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged };
 </script>
 </body>
 </html>
