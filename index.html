@@ -2062,6 +2062,37 @@
   </div>
 </div>
 
+<!-- DESTINATION PRIORITY PICKER -->
+<div id="dest-priority-overlay" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.35);" onclick="closeDestPriorityPicker()">
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#F4F7FB;border-radius:24px 24px 0 0;padding:20px 18px calc(28px + env(safe-area-inset-bottom));" onclick="event.stopPropagation()">
+    <div style="width:36px;height:4px;background:rgba(30,58,95,0.15);border-radius:2px;margin:0 auto 18px;"></div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:#8A9BAA;text-align:center;margin-bottom:14px;">SET PRIORITY</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <button onclick="setDestItemPriority('high')" style="padding:14px 10px;background:rgba(229,88,74,0.1);border:1.5px solid rgba(229,88,74,0.25);border-radius:16px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div style="width:12px;height:12px;border-radius:50%;background:#E5584A;"></div>
+        <span style="font-size:13px;font-weight:700;color:#E5584A;letter-spacing:0.06em;">HIGH</span>
+        <span style="font-size:11px;color:#8A9BAA;">Urgent focus</span>
+      </button>
+      <button onclick="setDestItemPriority('mid')" style="padding:14px 10px;background:rgba(245,166,35,0.1);border:1.5px solid rgba(245,166,35,0.25);border-radius:16px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div style="width:12px;height:12px;border-radius:50%;background:#F5A623;"></div>
+        <span style="font-size:13px;font-weight:700;color:#F5A623;letter-spacing:0.06em;">MID</span>
+        <span style="font-size:11px;color:#8A9BAA;">Active work</span>
+      </button>
+      <button onclick="setDestItemPriority('low')" style="padding:14px 10px;background:rgba(62,198,216,0.1);border:1.5px solid rgba(62,198,216,0.25);border-radius:16px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div style="width:12px;height:12px;border-radius:50%;background:#3EC6D8;"></div>
+        <span style="font-size:13px;font-weight:700;color:#3EC6D8;letter-spacing:0.06em;">LOW</span>
+        <span style="font-size:11px;color:#8A9BAA;">When ready</span>
+      </button>
+      <button onclick="setDestItemPriority('dormant')" style="padding:14px 10px;background:rgba(176,190,197,0.12);border:1.5px solid rgba(176,190,197,0.3);border-radius:16px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div style="width:12px;height:12px;border-radius:50%;background:#B0BEC5;"></div>
+        <span style="font-size:13px;font-weight:700;color:#B0BEC5;letter-spacing:0.06em;">DORMANT</span>
+        <span style="font-size:11px;color:#8A9BAA;">On hold</span>
+      </button>
+    </div>
+    <button onclick="setDestItemPriority(null)" style="width:100%;padding:12px;background:none;border:1px solid rgba(30,58,95,0.12);border-radius:14px;font-size:14px;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;">Clear Priority</button>
+  </div>
+</div>
+
 <!-- CREATE / EDIT DESTINATION MODAL -->
 <div class="modal-overlay" id="destModal" onclick="if(event.target===this)closeDestModal()">
   <div class="modal-card" style="max-height:88vh;overflow-y:auto;">
@@ -6688,14 +6719,20 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
             const statusColor = isDone ? '#4CAF50' : tPct > 0 ? dest.color : '#C0CDD5';
             const statusText  = isDone ? 'Done' : tPct > 0 ? 'In Progress' : 'Not Started';
             const barColor    = isDone ? '#4CAF50' : tPct > 0 ? dest.color : '#E0E8EF';
+            const PRIO = { high: { color:'#E5584A', bg:'rgba(229,88,74,0.1)', label:'HIGH' }, mid: { color:'#F5A623', bg:'rgba(245,166,35,0.1)', label:'MID' }, low: { color:'#3EC6D8', bg:'rgba(62,198,216,0.1)', label:'LOW' }, dormant: { color:'#B0BEC5', bg:'rgba(176,190,197,0.12)', label:'DORMANT' } };
+            const prio = item.priority && PRIO[item.priority] ? PRIO[item.priority] : null;
+            const stripeColor = prio ? prio.color : 'transparent';
+            const prioBadge = prio
+              ? `<div onclick="event.stopPropagation();openDestPriorityPicker('${item.id}')" style="padding:2px 7px;border-radius:20px;background:${prio.bg};cursor:pointer;flex-shrink:0;"><span style="font-size:9px;font-weight:700;letter-spacing:0.09em;color:${prio.color};">${prio.label}</span></div>`
+              : `<div onclick="event.stopPropagation();openDestPriorityPicker('${item.id}')" style="padding:2px 7px;border-radius:20px;background:rgba(30,58,95,0.05);cursor:pointer;flex-shrink:0;"><span style="font-size:9px;font-weight:600;letter-spacing:0.07em;color:#C0CDD5;">PRIORITY</span></div>`;
             return `<div class="dp-swipe-container" style="overflow:hidden;position:relative;border-bottom:${border};">
               <div class="dp-swipe-inner" style="display:flex;transform:translateX(0);transition:transform 0.22s ease;will-change:transform;">
-                <div data-dd-id="${item.id}" onclick="openCurrentFromDest('${item.currentId}')" style="min-width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px 12px 10px;cursor:pointer;">
+                <div data-dd-id="${item.id}" onclick="openCurrentFromDest('${item.currentId}')" style="min-width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px 12px 6px;cursor:pointer;border-left:3.5px solid ${stripeColor};">
                   <div ontouchstart="destDragStart(event,'${item.id}')" style="padding:8px 4px;cursor:grab;touch-action:none;flex-shrink:0;" onclick="event.stopPropagation()">${gripSvg}</div>
                   <div style="width:50px;height:50px;border-radius:14px;background:rgba(30,58,95,0.05);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${getCurrentIcon(current, 28)}</div>
                   <div style="flex:1;min-width:0;">
                     ${current.category ? `<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:#8A9BAA;margin-bottom:2px;">${current.category.toUpperCase()}</div>` : ''}
-                    <div style="font-size:15px;font-weight:700;color:#1E3A5F;margin-bottom:4px;">${current.name}</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">${prioBadge}<div style="font-size:15px;font-weight:700;color:#1E3A5F;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${current.name}</div></div>
                     <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;"><div style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;"></div><span style="font-size:11px;color:#8A9BAA;">${statusText}</span></div>
                     <div style="display:flex;align-items:center;gap:8px;">
                       <div style="flex:1;height:4px;background:#EEF2F5;border-radius:2px;"><div style="height:4px;width:${tPct}%;background:${barColor};border-radius:2px;transition:width 0.4s ease;"></div></div>
@@ -6789,6 +6826,29 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         }
       }, { passive: true });
     });
+  }
+
+  var _dpPriorityItemId = null;
+
+  function openDestPriorityPicker(itemId) {
+    _dpPriorityItemId = itemId;
+    document.getElementById('dest-priority-overlay').style.display = 'block';
+  }
+
+  function closeDestPriorityPicker() {
+    _dpPriorityItemId = null;
+    document.getElementById('dest-priority-overlay').style.display = 'none';
+  }
+
+  function setDestItemPriority(priority) {
+    const dest = DB_DESTINATIONS.find(d => d.id === _currentDestId);
+    if (!dest) return;
+    const item = dest.items.find(i => i.id === _dpPriorityItemId);
+    if (!item) return;
+    item.priority = priority || null;
+    saveDests();
+    closeDestPriorityPicker();
+    renderDestinationDetail();
   }
 
   function sendDestCurrentToOcean(itemId, currentId) {
