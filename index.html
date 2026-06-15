@@ -2383,7 +2383,10 @@
   }
   function getOceanCurrents(waveName) {
     const wave = getWaveByName(waveName);
-    return wave ? DB_CURRENTS.filter(c => c.waveId === wave.id && !c.active && !c.archived) : [];
+    if (!wave) return [];
+    const inDestIds = new Set();
+    DB_DESTINATIONS.forEach(d => d.items.forEach(i => { if (i.currentId) inDestIds.add(i.currentId); }));
+    return DB_CURRENTS.filter(c => c.waveId === wave.id && !c.active && !c.archived && !inDestIds.has(c.id));
   }
   function getArchivedCurrents(waveName) {
     const wave = getWaveByName(waveName);
