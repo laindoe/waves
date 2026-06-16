@@ -1908,8 +1908,8 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" stroke-width="1.8" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
         </div>
         <div>
-          <div class="settings-section-title">CLOUD SYNC (Firebase)</div>
-          <div class="settings-section-sub">Sync your data across devices with your Google account.</div>
+          <div class="settings-section-title">CLOUD SYNC</div>
+          <div class="settings-section-sub">Sync your data across devices.</div>
         </div>
       </div>
       <div class="settings-card">
@@ -1917,16 +1917,18 @@
           <div style="display:flex;align-items:center;gap:10px;width:100%;">
             <div id="fb-status-dot" style="width:8px;height:8px;border-radius:50%;background:#C0CDD5;flex-shrink:0;"></div>
             <span id="fb-status-label" style="font-size:15px;color:#1E3A5F;flex:1;">Not configured</span>
-            <button onclick="fbSignOut()" id="fb-signout-btn" style="display:none;background:none;border:none;font-size:14px;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0;">Sign out</button>
+            <button onclick="fbDisconnect()" id="fb-disconnect-btn" style="display:none;background:none;border:none;font-size:14px;color:#8A9BAA;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0;">Disconnect</button>
           </div>
-          <textarea id="fb-config-input" rows="5" placeholder='Paste your Firebase config object here&#10;{ apiKey: "...", authDomain: "...", projectId: "...", ... }'
-            style="width:100%;padding:11px 14px;border:1.5px solid rgba(30,58,95,0.15);border-radius:12px;font-size:13px;color:#1E3A5F;font-family:'DM Sans',sans-serif;outline:none;background:#FAFAFA;resize:vertical;"
-            onfocus="this.style.borderColor='#3EC6D8'" onblur="this.style.borderColor='rgba(30,58,95,0.15)'"></textarea>
-          <div style="display:flex;gap:8px;width:100%;">
-            <button onclick="saveFirebaseConfig()" style="flex:1;padding:11px 18px;background:linear-gradient(180deg,#4E2CC7,#3B1FA6);border:none;border-radius:12px;color:white;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Save &amp; Connect</button>
-            <button onclick="fbSignIn()" id="fb-signin-btn" style="display:none;padding:11px 18px;background:none;border:1.5px solid rgba(78,44,199,0.3);border-radius:12px;font-size:15px;font-weight:600;color:#4E2CC7;cursor:pointer;font-family:'DM Sans',sans-serif;">Sign In</button>
+          <div id="fb-setup-area">
+            <div style="font-size:13px;color:#8A9BAA;line-height:1.5;margin-bottom:8px;">Paste your Firebase config, then set a Sync ID (your email or any unique string). The same ID on any device will share your data.</div>
+            <textarea id="fb-config-input" rows="4" placeholder='{ apiKey: "...", authDomain: "...", projectId: "...", ... }'
+              style="width:100%;padding:11px 14px;border:1.5px solid rgba(30,58,95,0.15);border-radius:12px;font-size:13px;color:#1E3A5F;font-family:'DM Sans',sans-serif;outline:none;background:#FAFAFA;resize:none;margin-bottom:8px;"
+              onfocus="this.style.borderColor='#3EC6D8'" onblur="this.style.borderColor='rgba(30,58,95,0.15)'"></textarea>
+            <input id="fb-syncid-input" type="email" placeholder="Sync ID (e.g. your@email.com)"
+              style="width:100%;padding:11px 14px;border:1.5px solid rgba(30,58,95,0.15);border-radius:12px;font-size:15px;color:#1E3A5F;font-family:'DM Sans',sans-serif;outline:none;background:#FAFAFA;margin-bottom:8px;"
+              onfocus="this.style.borderColor='#3EC6D8'" onblur="this.style.borderColor='rgba(30,58,95,0.15)'"/>
+            <button onclick="saveFirebaseConfig()" style="width:100%;padding:12px 18px;background:linear-gradient(180deg,#4E2CC7,#3B1FA6);border:none;border-radius:12px;color:white;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Connect &amp; Sync</button>
           </div>
-          <div style="font-size:13px;color:#8A9BAA;line-height:1.5;">Config is stored only on this device. Get your Firebase config from the <a href="https://console.firebase.google.com/" target="_blank" style="color:#3EC6D8;text-decoration:none;">Firebase console</a>.</div>
         </div>
       </div>
     </div>
@@ -7173,87 +7175,57 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 <!-- Firebase cloud sync logic -->
 <script>
   // ── FIREBASE STATE ──
+  // ── FIREBASE STATE ──
   var _fbApp = null;
   var _fbDb = null;
-  var _fbAuth = null;
-  var _fbUser = null;
+  var _fbSyncId = null;
   var _fbSyncEnabled = false;
 
-  function renderFirebaseStatus(override) {
+  function renderFirebaseStatus(state) {
     var dot = document.getElementById('fb-status-dot');
     var label = document.getElementById('fb-status-label');
-    var signoutBtn = document.getElementById('fb-signout-btn');
-    var signinBtn = document.getElementById('fb-signin-btn');
+    var discBtn = document.getElementById('fb-disconnect-btn');
+    var setupArea = document.getElementById('fb-setup-area');
     if (!dot || !label) return;
-    var state = override || (_fbUser ? 'connected' : (_fbAuth ? 'configured' : 'none'));
+    if (!state) state = _fbSyncEnabled ? 'connected' : (_fbDb ? 'ready' : 'none');
     if (state === 'connecting') {
       dot.style.background = '#F5A623';
       label.textContent = 'Connecting…';
-      if (signoutBtn) signoutBtn.style.display = 'none';
-      if (signinBtn) signinBtn.style.display = 'none';
-    } else if (state === 'connected' && _fbUser) {
+      if (discBtn) discBtn.style.display = 'none';
+      if (setupArea) setupArea.style.display = 'none';
+    } else if (state === 'connected') {
       dot.style.background = '#27AE60';
-      label.textContent = 'Connected as ' + (_fbUser.email || _fbUser.displayName || 'user');
-      if (signoutBtn) signoutBtn.style.display = '';
-      if (signinBtn) signinBtn.style.display = 'none';
+      label.textContent = 'Syncing as ' + _fbSyncId;
+      if (discBtn) discBtn.style.display = '';
+      if (setupArea) setupArea.style.display = 'none';
     } else if (state === 'error') {
       dot.style.background = '#E74C3C';
-      label.textContent = 'Error — check config';
-      if (signoutBtn) signoutBtn.style.display = 'none';
-      if (signinBtn) signinBtn.style.display = 'none';
-    } else if (state === 'configured') {
-      dot.style.background = '#F5A623';
-      label.textContent = 'Config saved — sign in to sync';
-      if (signoutBtn) signoutBtn.style.display = 'none';
-      if (signinBtn) signinBtn.style.display = '';
+      label.textContent = 'Sync error — check config';
+      if (discBtn) discBtn.style.display = 'none';
+      if (setupArea) setupArea.style.display = '';
     } else {
       dot.style.background = '#C0CDD5';
       label.textContent = 'Not configured';
-      if (signoutBtn) signoutBtn.style.display = 'none';
-      if (signinBtn) signinBtn.style.display = 'none';
+      if (discBtn) discBtn.style.display = 'none';
+      if (setupArea) setupArea.style.display = '';
     }
   }
 
   function initFirebase() {
     var raw = localStorage.getItem('firebase_config');
-    if (!raw) return;
+    var syncId = localStorage.getItem('firebase_syncid');
+    if (!raw || !syncId) return;
+    var fb = window._fb || {};
+    if (!fb.initializeApp) { setTimeout(initFirebase, 300); return; }
     try {
       var config = JSON.parse(raw);
-      var fb = window._fb || {};
-      var initializeApp = fb.initializeApp;
-      if (!initializeApp) { setTimeout(initFirebase, 500); return; }
-      // Avoid "app already exists" error on hot reloads
-      try { _fbApp = initializeApp(config, 'waves'); }
-      catch(e) { _fbApp = fb.getApp ? fb.getApp('waves') : null; if (!_fbApp) throw e; }
-      _fbDb   = fb.getFirestore(_fbApp);
-      _fbAuth = fb.getAuth(_fbApp);
-      // Show connecting state while we wait for auth to resolve
+      try { _fbApp = fb.initializeApp(config, 'waves'); }
+      catch(e) { _fbApp = fb.getApp('waves'); }
+      _fbDb = fb.getFirestore(_fbApp);
+      _fbSyncId = syncId;
+      _fbSyncEnabled = true;
       renderFirebaseStatus('connecting');
-      // onAuthStateChanged fires once auth state is known (may take a moment after redirect)
-      fb.onAuthStateChanged(_fbAuth, function(user) {
-        _fbUser = user || null;
-        _fbSyncEnabled = !!user;
-        renderFirebaseStatus();
-        if (user) pullFromFirestore();
-      });
-      // Complete any pending redirect sign-in and surface errors clearly
-      fb.getRedirectResult(_fbAuth).then(function(result) {
-        if (result && result.user) {
-          // Redirect just completed — onAuthStateChanged will also fire, but update here too
-          _fbUser = result.user;
-          _fbSyncEnabled = true;
-          renderFirebaseStatus();
-          pullFromFirestore();
-        }
-      }).catch(function(e) {
-        if (e.code === 'auth/unauthorized-domain') {
-          renderFirebaseStatus('error');
-          alert('Domain not authorized in Firebase console.\n\nGo to: Authentication → Settings → Authorized domains\nAdd: ' + location.hostname);
-        } else if (e.code && e.code !== 'auth/no-auth-event') {
-          renderFirebaseStatus('error');
-          alert('Sign-in error: ' + e.code + '\n' + e.message);
-        }
-      });
+      pullFromFirestore();
     } catch(e) {
       console.error('Firebase init failed', e);
       renderFirebaseStatus('error');
@@ -7262,59 +7234,53 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
   function saveFirebaseConfig() {
     var raw = (document.getElementById('fb-config-input').value || '').trim();
+    var syncId = (document.getElementById('fb-syncid-input').value || '').trim();
     if (!raw) { alert('Please paste your Firebase config first.'); return; }
-    // Strip common wrappers from Firebase console
+    if (!syncId) { alert('Please enter a Sync ID (your email or any unique string).'); return; }
     raw = raw.replace(/^const\s+\w+\s*=\s*/, '').replace(/;?\s*$/, '').trim();
-    // If they pasted just the values without braces, wrap them
     if (!raw.startsWith('{')) raw = '{' + raw + '}';
     var cfg;
-    try {
-      cfg = (new Function('return (' + raw + ')'))();
-    } catch(e) {
-      alert('Could not read config: ' + e.message + '\n\nPaste the full firebaseConfig object from Firebase console → Project Settings → Your apps.');
-      return;
-    }
+    try { cfg = (new Function('return (' + raw + ')'))(); }
+    catch(e) { alert('Invalid Firebase config: ' + e.message); return; }
     if (!cfg || !cfg.projectId || !cfg.apiKey) {
-      alert('Config is missing projectId or apiKey. Make sure you copied the complete firebaseConfig object.');
+      alert('Config is missing projectId or apiKey.');
       return;
     }
     localStorage.setItem('firebase_config', JSON.stringify(cfg));
-    renderFirebaseStatus('connecting');
+    localStorage.setItem('firebase_syncid', syncId);
     document.getElementById('fb-config-input').value = '';
+    document.getElementById('fb-syncid-input').value = '';
+    renderFirebaseStatus('connecting');
     initFirebase();
   }
 
-  function fbSignIn() {
-    if (!_fbAuth) { alert('Firebase not initialized yet — wait a moment and try again.'); return; }
-    var fb = window._fb;
-    fb.signInWithRedirect(_fbAuth, new fb.GoogleAuthProvider()).catch(function(e) { alert('Sign-in failed: ' + e.message); });
-  }
-
-  function fbSignOut() {
-    if (!_fbAuth) return;
-    window._fb.signOut(_fbAuth).then(function() {
-      _fbUser = null;
-      _fbSyncEnabled = false;
-      renderFirebaseStatus();
-    });
+  function fbDisconnect() {
+    _fbSyncEnabled = false;
+    _fbSyncId = null;
+    _fbDb = null;
+    _fbApp = null;
+    localStorage.removeItem('firebase_syncid');
+    renderFirebaseStatus('none');
   }
 
   function pushToFirestore() {
-    if (!_fbSyncEnabled || !_fbUser) return;
+    if (!_fbSyncEnabled || !_fbSyncId || !_fbDb) return;
     var fb = window._fb;
-    fb.setDoc(fb.doc(_fbDb, 'users', _fbUser.uid, 'data', 'main'), {
-      waves: DB_WAVES,
-      currents: DB_CURRENTS,
-      tasks: DB_TASKS,
-      destinations: DB_DESTINATIONS,
+    // Sanitize: replace undefined with null so Firestore doesn't reject
+    var sanitize = function(arr) { return JSON.parse(JSON.stringify(arr || [])); };
+    fb.setDoc(fb.doc(_fbDb, 'users', _fbSyncId, 'data', 'main'), {
+      waves: sanitize(DB_WAVES),
+      currents: sanitize(DB_CURRENTS),
+      tasks: sanitize(DB_TASKS),
+      destinations: sanitize(DB_DESTINATIONS),
       updatedAt: Date.now()
-    }).catch(function(e) { console.error('Firestore push failed', e); });
+    }).catch(function(e) { console.error('Firestore push failed', e.code, e.message); });
   }
 
   function pullFromFirestore() {
-    if (!_fbSyncEnabled || !_fbUser) return;
+    if (!_fbSyncId || !_fbDb) return;
     var fb = window._fb;
-    fb.getDoc(fb.doc(_fbDb, 'users', _fbUser.uid, 'data', 'main')).then(function(snap) {
+    fb.getDoc(fb.doc(_fbDb, 'users', _fbSyncId, 'data', 'main')).then(function(snap) {
       if (snap.exists()) {
         var d = snap.data();
         if (d.waves)        DB_WAVES        = d.waves;
@@ -7324,9 +7290,14 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
         save();
         renderApp();
       } else {
+        // First time — push local data up
         pushToFirestore();
       }
-    }).catch(function(e) { console.error('Firestore pull failed', e); });
+      renderFirebaseStatus('connected');
+    }).catch(function(e) {
+      console.error('Firestore pull failed', e.code, e.message);
+      renderFirebaseStatus('error');
+    });
   }
 
   function renderApp() {
@@ -7337,12 +7308,11 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   }
 </script>
 
-<!-- Firebase SDK (modular compat, loaded as module, exposed via window._fb) -->
+<!-- Firebase SDK (no auth needed — sync key approach) -->
 <script type="module">
   import { initializeApp, getApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-  import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  window._fb = { initializeApp, getApp, getFirestore, doc, setDoc, getDoc, getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged };
+  window._fb = { initializeApp, getApp, getFirestore, doc, setDoc, getDoc };
 </script>
 </body>
 </html>
