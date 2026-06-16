@@ -7222,18 +7222,37 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
       var fb = window._fb || {};
       var initializeApp = fb.initializeApp;
       if (!initializeApp) { setTimeout(initFirebase, 500); return; }
-      _fbApp  = initializeApp(config, 'waves');
+      // Avoid "app already exists" error on hot reloads
+      try { _fbApp = initializeApp(config, 'waves'); }
+      catch(e) { _fbApp = fb.getApp ? fb.getApp('waves') : null; if (!_fbApp) throw e; }
       _fbDb   = fb.getFirestore(_fbApp);
       _fbAuth = fb.getAuth(_fbApp);
+      // Show connecting state while we wait for auth to resolve
+      renderFirebaseStatus('connecting');
+      // onAuthStateChanged fires once auth state is known (may take a moment after redirect)
       fb.onAuthStateChanged(_fbAuth, function(user) {
         _fbUser = user || null;
         _fbSyncEnabled = !!user;
         renderFirebaseStatus();
         if (user) pullFromFirestore();
       });
-      // Handle redirect sign-in result (iOS Safari uses redirect instead of popup)
-      fb.getRedirectResult(_fbAuth).catch(function(e) {
-        if (e.code !== 'auth/no-auth-event') console.error('Redirect sign-in error:', e.message);
+      // Complete any pending redirect sign-in and surface errors clearly
+      fb.getRedirectResult(_fbAuth).then(function(result) {
+        if (result && result.user) {
+          // Redirect just completed — onAuthStateChanged will also fire, but update here too
+          _fbUser = result.user;
+          _fbSyncEnabled = true;
+          renderFirebaseStatus();
+          pullFromFirestore();
+        }
+      }).catch(function(e) {
+        if (e.code === 'auth/unauthorized-domain') {
+          renderFirebaseStatus('error');
+          alert('Domain not authorized in Firebase console.\n\nGo to: Authentication → Settings → Authorized domains\nAdd: ' + location.hostname);
+        } else if (e.code && e.code !== 'auth/no-auth-event') {
+          renderFirebaseStatus('error');
+          alert('Sign-in error: ' + e.code + '\n' + e.message);
+        }
       });
     } catch(e) {
       console.error('Firebase init failed', e);
@@ -7320,10 +7339,10 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
 
 <!-- Firebase SDK (modular compat, loaded as module, exposed via window._fb) -->
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { initializeApp, getApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
   import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  window._fb = { initializeApp, getFirestore, doc, setDoc, getDoc, getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged };
+  window._fb = { initializeApp, getApp, getFirestore, doc, setDoc, getDoc, getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged };
 </script>
 </body>
 </html>
