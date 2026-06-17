@@ -7266,8 +7266,14 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   function pushToFirestore() {
     if (!_fbSyncEnabled || !_fbSyncId || !_fbDb) return;
     var fb = window._fb;
-    // Sanitize: replace undefined with null so Firestore doesn't reject
-    var sanitize = function(arr) { return JSON.parse(JSON.stringify(arr || [])); };
+    // Strip base64 logos — Firestore has a 1MB doc limit and logos are device-local anyway
+    var stripLogos = function(arr) {
+      return (arr || []).map(function(obj) {
+        if (!obj.logo || !obj.logo.startsWith('data:')) return obj;
+        var copy = Object.assign({}, obj); copy.logo = null; return copy;
+      });
+    };
+    var sanitize = function(arr) { return JSON.parse(JSON.stringify(stripLogos(arr) || [])); };
     fb.setDoc(fb.doc(_fbDb, 'users', _fbSyncId, 'data', 'main'), {
       waves: sanitize(DB_WAVES),
       currents: sanitize(DB_CURRENTS),
@@ -7280,11 +7286,24 @@ Keep the tone warm, direct, and insightful — not vague or generic. No disclaim
   function pullFromFirestore() {
     if (!_fbSyncId || !_fbDb) return;
     var fb = window._fb;
+    // Snapshot local logos before overwriting with cloud data
+    var localWaveLogos = {};
+    var localCurrentLogos = {};
+    (DB_WAVES || []).forEach(function(w) { if (w.logo) localWaveLogos[w.id] = w.logo; });
+    (DB_CURRENTS || []).forEach(function(c) { if (c.logo) localCurrentLogos[c.id] = c.logo; });
     fb.getDoc(fb.doc(_fbDb, 'users', _fbSyncId, 'data', 'main')).then(function(snap) {
       if (snap.exists()) {
         var d = snap.data();
-        if (d.waves)        DB_WAVES        = d.waves;
-        if (d.currents)     DB_CURRENTS     = d.currents;
+        if (d.waves) {
+          DB_WAVES = d.waves.map(function(w) {
+            return localWaveLogos[w.id] ? Object.assign({}, w, { logo: localWaveLogos[w.id] }) : w;
+          });
+        }
+        if (d.currents) {
+          DB_CURRENTS = d.currents.map(function(c) {
+            return localCurrentLogos[c.id] ? Object.assign({}, c, { logo: localCurrentLogos[c.id] }) : c;
+          });
+        }
         if (d.tasks)        DB_TASKS        = d.tasks;
         if (d.destinations) DB_DESTINATIONS = d.destinations;
         save();
